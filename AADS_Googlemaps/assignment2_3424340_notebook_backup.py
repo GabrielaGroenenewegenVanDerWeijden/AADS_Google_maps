@@ -130,7 +130,7 @@ class FloodFillSolver():
         x_cord, y_cord = node
 
         # Next possible coordinates
-        if y_cord + 1 <= len(self.road_grid.shape(1)):
+        if y_cord + 1 <= self.road_grid.shape[1]:
             right_step = (x_cord, y_cord + 1)
         else:
             right_step = None
@@ -138,7 +138,7 @@ class FloodFillSolver():
             left_step = (x_cord, y_cord - 1)
         else:
             left_step = None
-        if x_cord + 1 <= len(self.road_grid.shape(0)):
+        if x_cord + 1 <= self.road_grid.shape[0]:
             down_step = (x_cord + 1, y_cord)
         else:
             down_step = None
@@ -147,13 +147,9 @@ class FloodFillSolver():
         else:
             up_step = None
         
-        list_of_pos_steps = (right_step, left_step, down_step, up_step)
+        list_of_pos_steps = [right_step, left_step, down_step, up_step]
 
-        for step in list_of_pos_steps:
-            if self.road_grid[step] > 0 and step not in self.history.key() and step not in self.queue and step is not None: 
-                self.queue.add(step)
-
-        return self.queue
+        return list_of_pos_steps
         
     
 
