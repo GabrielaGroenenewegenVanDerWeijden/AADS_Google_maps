@@ -200,7 +200,24 @@ class Graph(GraphBluePrint):
         """
         queue = deque([self.start])
         history = {self.start}
-        raise NotImplementedError("Please complete this method")
+
+        # Initializing the starting node to be the current node.
+        current = self.start
+
+        if current not in history:
+            self.queue.append(current)
+            self.history.add(current)
+        
+        
+        # While the queue is not empty
+        while queue:
+            if cur_node not in history:
+                cur_node = self.queue.popleft()
+
+            actions = self.neighbour_coordinates(node)
+            self.adjacency_list_add_node(node, actions)
+
+        #raise NotImplementedError("Please complete this method")
                     
     def adjacency_list_add_node(self, coordinate, actions):
         """
@@ -215,7 +232,15 @@ class Graph(GraphBluePrint):
         :param actions: The actions possible from this coordinate, an action is defined as an action in the coordinate state-space.
         :type actions: list[tuple[int]]
         """
-        raise NotImplementedError("Please complete this method")
+
+        # Determining the number of actions.
+        n_actions = len(actions)
+
+        # Accourding to the ammount of possible actions we can deduce whether the coordinate is a cross node. 1 meaning it a deadend, 3 & 4 cross node/junction node. 
+        # Hoeweveer, if it's 2 doesn't neccesarily mean it a corner because it can be an edge as well. Thus, we specify if its indeed a corner.
+        if n_actions != 2 or not (action[0][0] == actions[1][0] and action[0][1] == actions[1][1]):
+            self.adjacency_list[coordinate] = set()
+        
                            
     def neighbour_coordinates(self, coordinate):
         """
@@ -227,7 +252,24 @@ class Graph(GraphBluePrint):
         :return: A list with possible next coordinates that can be visited from the current coordinate.
         :rtype: list[tuple[int]]  
         """
-        raise NotImplementedError("Please complete this method")
+    
+        # Mostly the same function as the flood fill above.
+
+        # Getting the indices of the current node.
+        row, col = coordinate[0], coordinate[1]
+
+        # Initializing the te list.
+        pos_steps = []
+
+        # Getting the grid.
+        grid = map_.grid
+
+        for direction in [(row + 1, col), (row, col + 1), (row, col - 1), (row - 1, col)]:
+            # check if valid
+            if direction[0] < grid.shape[0] and direction[1] < grid.shape[1] and direction[0] >= 0 and direction[1] >=0 and grid[direction] != 0:
+                pos_steps.append(direction)
+            
+        return pos_steps   
     
     def __repr__(self):
         """
