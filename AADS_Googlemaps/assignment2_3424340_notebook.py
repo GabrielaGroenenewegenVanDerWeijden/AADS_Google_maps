@@ -248,7 +248,7 @@ class Graph(GraphBluePrint):
 
         # Accourding to the ammount of possible actions we can deduce whether the coordinate is a cross node. 1 meaning it a deadend, 3 & 4 cross node/junction node. 
         # Hoeweveer, if it's 2 doesn't neccesarily mean it a corner because it can be an edge as well. Thus, we specify if its indeed a corner.
-        if n_actions != 2 or not (actions[0][0] == actions[1][0] and actions[0][1] == actions[1][1]):
+        if n_actions != 2 or (actions[0][0] != actions[1][0] and actions[0][1] != actions[1][1]):
             self.adjacency_list[coordinate] = set()
         
                            
@@ -274,8 +274,9 @@ class Graph(GraphBluePrint):
         # Getting the grid.
         grid = map_.grid
 
+
+        # Looping throught every possible direction and checking if they are possible.
         for direction in [(row + 1, col), (row, col + 1), (row, col - 1), (row - 1, col)]:
-            # check if valid
             if direction[0] < grid.shape[0] and direction[1] < grid.shape[1] and direction[0] >= 0 and direction[1] >=0 and grid[direction] != 0:
                 pos_steps.append(direction)
             
@@ -349,7 +350,14 @@ class Graph(GraphBluePrint):
         """
         This method does a depth-first/brute-force search for each node to find the edges of each node.
         """
-        raise NotImplementedError("Please complete this method")
+
+        # Getting the grid.
+        grid = map_.grid
+
+        adjacency_list = self.find_nodes()
+
+        print(adjacency_list)
+
 
     def find_next_node_in_adjacency_list(self, node, direction):
         """
@@ -362,7 +370,6 @@ class Graph(GraphBluePrint):
         :return: This returns the first node in this direction and the distance.
         :rtype: tuple[int], int 
         """
-        raise NotImplementedError("Please complete this method")
 
 
 ############ END OF CODE BLOCKS, START SCRIPT BELOW! ################
