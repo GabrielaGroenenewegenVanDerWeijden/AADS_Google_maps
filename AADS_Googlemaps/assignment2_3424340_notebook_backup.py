@@ -43,11 +43,18 @@ class FloodFillSolver():
         self.queue = deque([source])
         self.history = {source: None}
         
+        # Initializing the destination, source and road_grid.
         self.destination = destination
+        self.source = source
         self.road_grid = road_grid
+
+        # Calling the main_loop.
         self.main_loop()
-        path = self.find_path()
-        length = len(path) - 1  # Length is the number of steps, which is the number of coordinates minus 1
+
+        # Calculating the path and the length of the path.
+        path, length = self.find_path()
+
+        # Returning the path and the length of the path.
         return path, length
 
     def find_path(self):
@@ -64,12 +71,24 @@ class FloodFillSolver():
         :return: A path that is the optimal route from source to destination and its length.
         :rtype: list[tuple[int]], float
         """
+
+        # Initializing the path list and the initial current node as the destination.
         path = []
-        current = destination
+        current = self.destination
+
+        # For as long the node is not None it will be added to the path and the new current node is initialized using the dictionary of history.
         while current is not None:
             path.append(current)
             current = self.history[current]
-        return path[::-1]  # Reverse the path to get it from source to destination
+
+        # Calculating length according to Manhattan distance.
+        length = np.absolute (self.source[0] - self.destination[0]) + np.absolute (self.source[1] - self.destination[1])
+
+        # Reverse the path to get it from source to destination.
+        path = path[::-1]
+        
+        # Returning the path and the length.
+        return path, length
               
     def main_loop(self):
         """
@@ -78,10 +97,14 @@ class FloodFillSolver():
         It does not have any inputs nor outputs. 
         Hint, use object attributes to store results.
         """
+        # While the queue is not empty a new current node
         while self.queue:
+            # We take the fist node in the queue and check if the base case is satisfied or not. If it is satisfied the loop stops and returns to the call function. Finally, from there the
+            # path and length can be returned since they computed.
             node = self.queue.popleft()
             if self.base_case(node):
                 return
+            # Otherwise, we are gonna go through all the next possible steps.
             for new_node in self.next_step(node):
                 self.step(node, new_node)
 
@@ -127,44 +150,192 @@ class FloodFillSolver():
         """
 
         # Getting the indices of the current node.
-        x_cord, y_cord = node
+        row, col = node[0], node[1]
 
-        # Next possible coordinates
-        if y_cord + 1 <= self.road_grid.shape[1]:
-            right_step = (x_cord, y_cord + 1)
-        else:
-            right_step = None
-        if y_cord - 1 >= 0: 
-            left_step = (x_cord, y_cord - 1)
-        else:
-            left_step = None
-        if x_cord + 1 <= self.road_grid.shape[0]:
-            down_step = (x_cord + 1, y_cord)
-        else:
-            down_step = None
-        if x_cord - 1 >= 0:
-            up_step = (x_cord - 1, y_cord)
-        else:
-            up_step = None
-        
-        list_of_pos_steps = [right_step, left_step, down_step, up_step]
+        # Initializing the te list.
+        pos_steps = []
 
-        return list_of_pos_steps
-        
+        # Looping throught every possible direction and checking if they are possible.
+        for direction in [(row + 1, col), (row, col + 1), (row, col - 1), (row - 1, col)]:
+            if direction[0] < self.road_grid.shape[0] and direction[1] < self.road_grid.shape[1] and direction[0] >= 0 and direction[1] >=0 and self.road_grid[direction] != 0:
+                pos_steps.append(direction)
+            
+        # Returning the possible steps.
+        return pos_steps
+
+############ CODE BLOCK 10 ################
+
+class GraphBluePrint():
+    """
+    You can ignore this class, it is just needed due to technicalities.
+    """
+    def find_nodes(self): pass
+    def find_edges(self): pass
     
+class Graph(GraphBluePrint):   
+    """
+    Attributes:
+        :param adjacency_list: The adjacency list with the road distances and speed limit.
+        :type adjacency_list: dict[tuple[int]: set[edge]], where an edge is a fictional datatype 
+                              which is a tuple containing the datatypes tuple[int], int, float
+        :param map: The map of the graph.
+        :type map: Map
+    """
+    def __init__(self, map_, start=(0, 0)):
+        """
+        This function transforms any (city or lower) map into a graph representation.
 
-
+        :param map_: The map that needs to be transformed.
+        :type map_: Map
+        :param start: The start node from which we will find all other nodes.
+        :type start: tuple[int]
+        """
+        self.adjacency_list = {}
+        self.map = map_
+        self.start = start
         
+        self.find_nodes()
+        self.find_edges()  # This will be implemented in the next notebook cell
+        
+    def find_nodes(self):
+        """
+        This method contains a breadth-frist search algorithm to find all the nodes in the graph.
+        So far, we called this method `step`. However, this class is more than just the search algorithm,
+        therefore, we gave it a bit more descriptive name.
 
-plt.matplotlib.rcParams['figure.dpi'] = max(30, map_.size ** 0.5 // 2)  # Number of pixels, therefore, the quality of the image. A large dpi is very slow.
+        Note, that we only want to find the nodes, so history does not need to contain a partial path (previous node).
+        In `find_edges` (the next cell), we will add edges for each node.
+        """
+        queue = deque([self.start])
+        history = {self.start}
 
-# Generate a random start and end position in the grid for proper testing.
-start = (0,0)
-end =  (map_.shape[0]-1, map_.shape[1]-1)
+        while queue:
+            current = queue.popleft()
 
-path, length = FloodFillSolver()(map_, start, end)
-print(f"The path length was {length}.")
-map_.show(path, True)
+            actions = self.neighbour_coordinates(current)
+            self.adjacency_list_add_node(current, actions)
+
+            for action in actions:
+                if action not in history:
+                    queue.append(action)
+                    history.add(action)
+
+                    
+    def adjacency_list_add_node(self, coordinate, actions):
+        """
+        This is a helper function for the breadth-first search algorithm to add a coordinate to the `adjacency_list` and
+        to determine if a coordinate needs to be added to the `adjacency_list`.
+
+        Reminder: A coordinate should only be added to the adjacency list if it is a corner, a crossing, or a dead end.
+                  Adding the coordinate to the adjacency_list is equivalent to saying that it is a node in the graph.
+
+        :param coordinate: The coordinate that might need to be added to the adjacency_list.
+        :type coordinate: tuple[int]
+        :param actions: The actions possible from this coordinate, an action is defined as an action in the coordinate state-space.
+        :type actions: list[tuple[int]]
+        """
+
+        # Determining the number of actions.
+        n_actions = len(actions)
+
+        # Accourding to the ammount of possible actions we can deduce whether the coordinate is a cross node. 1 meaning it a deadend, 3 & 4 cross node/junction node. 
+        # Hoeweveer, if it's 2 doesn't neccesarily mean it a corner because it can be an edge as well. Thus, we specify if its indeed a corner.
+        if n_actions != 2 or not (actions[0][0] == actions[1][0] and actions[0][1] == actions[1][1]):
+            self.adjacency_list[coordinate] = set()
+        
+                           
+    def neighbour_coordinates(self, coordinate):
+        """
+        This method returns the next possible actions and is part of the breadth-first search algorithm.
+        Similar to `find_nodes`, we often call this method `next_step`.
+        
+        :param coordinate: The current coordinate
+        :type coordinate: tuple[int]
+        :return: A list with possible next coordinates that can be visited from the current coordinate.
+        :rtype: list[tuple[int]]  
+        """
+    
+        # Mostly the same function as the flood fill above.
+
+        # Getting the indices of the current node.
+        row, col = coordinate[0], coordinate[1]
+
+        # Initializing the te list.
+        pos_steps = []
+
+        # Getting the grid.
+        grid = map_.grid
+        print(grid)
+
+        for direction in [(row + 1, col), (row, col + 1), (row, col - 1), (row - 1, col)]:
+            # check if valid
+            if direction[0] < grid.shape[0] and direction[1] < grid.shape[1] and direction[0] >= 0 and direction[1] >=0 and grid[direction] != 0:
+                pos_steps.append(direction)
+            
+        return pos_steps   
+    
+    def __repr__(self):
+        """
+        This returns a representation of a graph.
+
+        :return: A string representing the graph object.
+        :rtype: str
+        """
+        # You can change this to anything you like, such that you can easily print a Graph object. An example is already given.
+        return repr(dict(sorted(self.adjacency_list.items()))).replace("},", "},\n")
+
+    def __getitem__(self, key):
+        """
+        A magic method that makes using keys possible.
+        This makes it possible to use self[node] instead of self.adjacency_list[node]
+
+        :return: The nodes that can be reached from the node `key`.
+        :rtype: set[tuple[int]]
+        """
+        return self.adjacency_list[key]
+
+    def __contains__(self, key):
+        """
+        This magic method makes it possible to check if a coordinate is in the graph.
+
+        :return: This returns if the coordinate is in the graph.
+        :rtype: bool
+        """
+        return key in self.adjacency_list
+
+    def get_random_node(self):
+        """
+        This returns a random node from the graph.
+        
+        :return: A random node
+        :rtype: tuple[int]
+        """
+        return tuple(RNG.choice(list(self.adjacency_list)))
+        
+    def show_coordinates(self, size=5, color='k'):
+        """
+        If this method is used before another method that does a plot, it will be plotted on top.
+
+        :param size: The size of the dots, default to 5
+        :type size: int
+        :param color: The Matplotlib color of the dots, defaults to black
+        :type color: string
+        """
+        nodes = self.adjacency_list.keys()
+        plt.plot([n[1] for n in nodes], [n[0] for n in nodes], 'o', color=color, markersize=size)        
+
+    def show_edges(self, width=0.05, color='r'):
+        """
+        If this method is used before another method that does a plot, it will be plotted on top.
+        
+        :param width: The width of the arrows, default to 0.05
+        :type width: float
+        :param color: The Matplotlib color of the arrows, defaults to red
+        :type color: string
+        """
+        for node, edge_list in self.adjacency_list.items():
+            for next_node,_,_ in edge_list:
+                plt.arrow(node[1], node[0], (next_node[1] - node[1])*0.975, (next_node[0] - node[0])*0.975, color=color, length_includes_head=True, width=width, head_width=4*width)
 
 
 ############ END OF CODE BLOCKS, START SCRIPT BELOW! ################

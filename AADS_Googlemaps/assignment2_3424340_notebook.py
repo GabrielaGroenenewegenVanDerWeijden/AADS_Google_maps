@@ -71,13 +71,17 @@ class FloodFillSolver():
         :return: A path that is the optimal route from source to destination and its length.
         :rtype: list[tuple[int]], float
         """
+
+        # Initializing the path list and the initial current node as the destination.
         path = []
         current = self.destination
+
+        # For as long the node is not None it will be added to the path and the new current node is initialized using the dictionary of history.
         while current is not None:
             path.append(current)
             current = self.history[current]
 
-         # Calculating length according to Manhattan distance.
+        # Calculating length according to Manhattan distance.
         length = np.absolute (self.source[0] - self.destination[0]) + np.absolute (self.source[1] - self.destination[1])
 
         # Reverse the path to get it from source to destination.
@@ -93,11 +97,14 @@ class FloodFillSolver():
         It does not have any inputs nor outputs. 
         Hint, use object attributes to store results.
         """
+        # While the queue is not empty a new current node
         while self.queue:
+            # We take the fist node in the queue and check if the base case is satisfied or not. If it is satisfied the loop stops and returns to the call function. Finally, from there the
+            # path and length can be returned since they computed.
             node = self.queue.popleft()
             if self.base_case(node):
                 return
-
+            # Otherwise, we are gonna go through all the next possible steps.
             for new_node in self.next_step(node):
                 self.step(node, new_node)
 
@@ -148,11 +155,12 @@ class FloodFillSolver():
         # Initializing the te list.
         pos_steps = []
 
+        # Looping throught every possible direction and checking if they are possible.
         for direction in [(row + 1, col), (row, col + 1), (row, col - 1), (row - 1, col)]:
-            # check if valid
             if direction[0] < self.road_grid.shape[0] and direction[1] < self.road_grid.shape[1] and direction[0] >= 0 and direction[1] >=0 and self.road_grid[direction] != 0:
                 pos_steps.append(direction)
             
+        # Returning the possible steps.
         return pos_steps
 
 ############ CODE BLOCK 10 ################
@@ -201,23 +209,25 @@ class Graph(GraphBluePrint):
         queue = deque([self.start])
         history = {self.start}
 
-        # Initializing the starting node to be the current node.
-        current = self.start
 
-        if current not in history:
-            self.queue.append(current)
-            self.history.add(current)
-        
-        
-        # While the queue is not empty
+        # Looping through the queue until it is empty.
         while queue:
-            if cur_node not in history:
-                cur_node = self.queue.popleft()
+            # In the first loop the current node would be 'self.start', from there after each iteration it would be the next node in the queue.   
+            current = queue.popleft()
 
-            actions = self.neighbour_coordinates(node)
-            self.adjacency_list_add_node(node, actions)
+            # Finding the possible actions using the neighbour_coordinates function.
+            actions = self.neighbour_coordinates(current)
 
-        #raise NotImplementedError("Please complete this method")
+            # Checking if the current node needs to be added to the adjacency list.
+            self.adjacency_list_add_node(current, actions)
+
+            # Going throught all the actions and adding them to the queue and history if they are not in history. They should be added in the queue and history.
+            for action in actions:
+                if action not in history:
+                    queue.append(action)
+                    history.add(action)
+            
+
                     
     def adjacency_list_add_node(self, coordinate, actions):
         """
@@ -238,7 +248,7 @@ class Graph(GraphBluePrint):
 
         # Accourding to the ammount of possible actions we can deduce whether the coordinate is a cross node. 1 meaning it a deadend, 3 & 4 cross node/junction node. 
         # Hoeweveer, if it's 2 doesn't neccesarily mean it a corner because it can be an edge as well. Thus, we specify if its indeed a corner.
-        if n_actions != 2 or not (action[0][0] == actions[1][0] and action[0][1] == actions[1][1]):
+        if n_actions != 2 or not (actions[0][0] == actions[1][0] and actions[0][1] == actions[1][1]):
             self.adjacency_list[coordinate] = set()
         
                            
@@ -333,6 +343,26 @@ class Graph(GraphBluePrint):
         for node, edge_list in self.adjacency_list.items():
             for next_node,_,_ in edge_list:
                 plt.arrow(node[1], node[0], (next_node[1] - node[1])*0.975, (next_node[0] - node[0])*0.975, color=color, length_includes_head=True, width=width, head_width=4*width)
+
+############ CODE BLOCK 15 ################
+    def find_edges(self):
+        """
+        This method does a depth-first/brute-force search for each node to find the edges of each node.
+        """
+        raise NotImplementedError("Please complete this method")
+
+    def find_next_node_in_adjacency_list(self, node, direction):
+        """
+        This is a helper method for find_edges to find a single edge given a node and a direction.
+
+        :param node: The node from which we try to find its "neighboring node" NOT its neighboring coordinates.
+        :type node: tuple[int]
+        :param direction: The direction we want to search in this can only be 4 values (0, 1), (1, 0), (0, -1) or (-1, 0).
+        :type direction: tuple[int]
+        :return: This returns the first node in this direction and the distance.
+        :rtype: tuple[int], int 
+        """
+        raise NotImplementedError("Please complete this method")
 
 
 ############ END OF CODE BLOCKS, START SCRIPT BELOW! ################
