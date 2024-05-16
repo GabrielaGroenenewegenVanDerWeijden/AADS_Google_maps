@@ -209,16 +209,24 @@ class Graph(GraphBluePrint):
         queue = deque([self.start])
         history = {self.start}
 
+
+        # Looping through the queue until it is empty.
         while queue:
+            # In the first loop the current node would be 'self.start', from there after each iteration it would be the next node in the queue.   
             current = queue.popleft()
 
+            # Finding the possible actions using the neighbour_coordinates function.
             actions = self.neighbour_coordinates(current)
+
+            # Checking if the current node needs to be added to the adjacency list.
             self.adjacency_list_add_node(current, actions)
 
+            # Going throught all the actions and adding them to the queue and history if they are not in history. They should be added in the queue and history.
             for action in actions:
                 if action not in history:
                     queue.append(action)
                     history.add(action)
+            
 
                     
     def adjacency_list_add_node(self, coordinate, actions):
@@ -240,7 +248,7 @@ class Graph(GraphBluePrint):
 
         # Accourding to the ammount of possible actions we can deduce whether the coordinate is a cross node. 1 meaning it a deadend, 3 & 4 cross node/junction node. 
         # Hoeweveer, if it's 2 doesn't neccesarily mean it a corner because it can be an edge as well. Thus, we specify if its indeed a corner.
-        if n_actions != 2 or not (actions[0][0] == actions[1][0] and actions[0][1] == actions[1][1]):
+        if n_actions != 2 or (actions[0][0] != actions[1][0] and actions[0][1] != actions[1][1]):
             self.adjacency_list[coordinate] = set()
         
                            
@@ -265,10 +273,10 @@ class Graph(GraphBluePrint):
 
         # Getting the grid.
         grid = map_.grid
-        print(grid)
 
+
+        # Looping throught every possible direction and checking if they are possible.
         for direction in [(row + 1, col), (row, col + 1), (row, col - 1), (row - 1, col)]:
-            # check if valid
             if direction[0] < grid.shape[0] and direction[1] < grid.shape[1] and direction[0] >= 0 and direction[1] >=0 and grid[direction] != 0:
                 pos_steps.append(direction)
             
@@ -336,6 +344,32 @@ class Graph(GraphBluePrint):
         for node, edge_list in self.adjacency_list.items():
             for next_node,_,_ in edge_list:
                 plt.arrow(node[1], node[0], (next_node[1] - node[1])*0.975, (next_node[0] - node[0])*0.975, color=color, length_includes_head=True, width=width, head_width=4*width)
+
+############ CODE BLOCK 15 ################
+    def find_edges(self):
+        """
+        This method does a depth-first/brute-force search for each node to find the edges of each node.
+        """
+
+        # Getting the grid.
+        grid = map_.grid
+
+        adjacency_list = self.find_nodes()
+
+        print(adjacency_list)
+
+
+    def find_next_node_in_adjacency_list(self, node, direction):
+        """
+        This is a helper method for find_edges to find a single edge given a node and a direction.
+
+        :param node: The node from which we try to find its "neighboring node" NOT its neighboring coordinates.
+        :type node: tuple[int]
+        :param direction: The direction we want to search in this can only be 4 values (0, 1), (1, 0), (0, -1) or (-1, 0).
+        :type direction: tuple[int]
+        :return: This returns the first node in this direction and the distance.
+        :rtype: tuple[int], int 
+        """
 
 
 ############ END OF CODE BLOCKS, START SCRIPT BELOW! ################
