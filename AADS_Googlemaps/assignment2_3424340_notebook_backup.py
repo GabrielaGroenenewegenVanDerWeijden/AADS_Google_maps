@@ -274,7 +274,6 @@ class Graph(GraphBluePrint):
         # Getting the grid.
         grid = map_.grid
 
-
         # Looping throught every possible direction and checking if they are possible.
         for direction in [(row + 1, col), (row, col + 1), (row, col - 1), (row - 1, col)]:
             if direction[0] < grid.shape[0] and direction[1] < grid.shape[1] and direction[0] >= 0 and direction[1] >=0 and grid[direction] != 0:
@@ -351,13 +350,44 @@ class Graph(GraphBluePrint):
         This method does a depth-first/brute-force search for each node to find the edges of each node.
         """
 
+        """
+        queue = deque([self.start])
+        history = {self.start}
+
+
+        # Looping through the queue until it is empty.
+        while queue:
+            # In the first loop the current node would be 'self.start', from there after each iteration it would be the next node in the queue.   
+            current = queue.popleft()
+
+            # Finding the possible actions using the neighbour_coordinates function.
+            actions = self.neighbour_coordinates(current)
+
+            # Checking if the current node needs to be added to the adjacency list.
+            self.adjacency_list_add_node(current, actions)
+
+            # Going throught all the actions and adding them to the queue and history if they are not in history. They should be added in the queue and history.
+            for action in actions:
+                if action not in history:
+                    queue.append(action)
+                    history.add(action)
+        """
+
         # Getting the grid.
         grid = map_.grid
+        starting_node = self.start
 
         adjacency_list = self.find_nodes()
+        
+        direction = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        
+        size_grid = grid.size
+        print(size_grid)
 
+                     
+           
         print(adjacency_list)
-
+        print(grid)
 
     def find_next_node_in_adjacency_list(self, node, direction):
         """
@@ -370,6 +400,74 @@ class Graph(GraphBluePrint):
         :return: This returns the first node in this direction and the distance.
         :rtype: tuple[int], int 
         """
+
+        grid = map_.grid
+        current_node = node
+        direction = direction
+        distance = 0
+     
+        while distance < grid.shape[0] and distance >= 0:
+            current_node = (current_node[0] + direction[0], current_node[1] + direction[1])
+            distance += 1
+            if current_node[0] < grid.shape[0] and current_node[1] < grid.shape[1] and grid[current_node] != 0:
+                neighbour_node = current_node
+                return neighbour_node, distance
+
+############ CODE BLOCK 120 ################
+
+class FloodFillSolverGraph(FloodFillSolver):
+    """
+    A class instance should at least contain the following attributes after being called:
+        :param queue: A queue that contains all the nodes that need to be visited.
+        :type queue: collections.deque
+        :param history: A dictionary containing the coordinates that will be visited and as values the coordinate that lead to this coordinate.
+        :type history: dict[tuple[int], tuple[int]]
+    """
+    def __call__(self, graph, source, destination):      
+        """
+        This method gives a shortest route through the grid from source to destination.
+        You start at the source and the algorithm ends if you reach the destination, both nodes should be included in the path.
+        A route consists of a list of nodes (which are coordinates).
+
+        Hint: The history is already given as a dictionary with as keys the node in the state-space graph and
+        as values the previous node from which this node was visited.
+
+        :param graph: The graph that represents the map.
+        :type graph: Graph
+        :param source: The node where the path starts.
+        :type source: tuple[int]
+        :param destination: The node where the path ends.
+        :type destination: tuple[int]
+        :return: The shortest route, which consists of a list of nodes and the length of the route.
+        :rtype: list[tuple[int]], float
+        """       
+        self.queue = deque([source])
+        self.history = {source: None}
+        
+        raise NotImplementedError("Please complete this method")       
+
+    # def find_path(self):
+    #     """
+    #     This method finds the shortest paths between the source node and the destination node.
+    #     It also returns the length of the path. 
+        
+    #     Note, that going from one node to the next has a length of 1.
+
+    #     :return: A path that is the optimal route from source to destination and its length.
+    #     :rtype: list[tuple[int]], float
+    #     """
+    #     raise NotImplementedError("Please complete this method")       
+
+    def next_step(self, node):
+        """
+        This method returns the next possible actions.
+
+        :param node: The current node
+        :type node: tuple[int]
+        :return: A list with possible next nodes that can be visited from the current node.
+        :rtype: list[tuple[int]]  
+        """
+        raise NotImplementedError("Please complete this method")
 
 
 ############ END OF CODE BLOCKS, START SCRIPT BELOW! ################
