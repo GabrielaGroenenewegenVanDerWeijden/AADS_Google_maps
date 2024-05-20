@@ -379,7 +379,7 @@ class Graph(GraphBluePrint):
 
         # While the stack isn't empty
         while stack: 
-            # We take the last node added. Because a stack works with FIFO logic.
+            # We take the last node added. Because a stack works with LIFO logic.
             current_node = stack.pop()
 
             # If the current node is not in the history we add it.
@@ -784,18 +784,56 @@ def coordinate_to_node(map_, graph, coordinate):
     :return: This returns a list of closest nodes which contains either 1 or 2 nodes.
     :rtype: list[tuple[int]]
     """
-    print(coordinate)
-    print(graph)
+    # Initializing the grid.
     grid = map_.grid
 
-    # If the node is a coordinate we return a list of just the coordinate. Otherwise, we start looking wich are the closest nodes. 
+    # Initializing the possible directions.
+    direction = [(1,0), (-1, 0), (0, 1), (0, -1)]
+
+    # Initializing the list of the closest nodes.
+    closest = []
+
+    # If the coordinate is a node then we return the coordinate in a list. This works.
     if coordinate in graph:
-        return list(coordinate)
+        closest.append(coordinate)
+        print(closest)
+        return closest
     else:
-        # Splitting the graph into two subgraphs.
-        mid = grid.shape[0]//2
-        sub_graph1 = graph[:mid]
-        print(sub_graph1)
+        # We have to look in all directions where the two closest nodes are.
+        for way in direction:
+            # We initialize a boolean until we have found the node and aftwer each direction we must reinitialize the coordinate.
+            Found = False
+            new_coordinate = coordinate
+            while not Found:
+                # Going towards the certain direction.
+                new_coordinate = (new_coordinate[0] + way[0], new_coordinate[1] + way[1])
+               
+                # Checking if valid, otherwise we break the loop and start againg looping towards another direction.
+                if new_coordinate[0] < grid.shape[0] and new_coordinate[1] < grid.shape[1] and new_coordinate[0] >= 0 and new_coordinate[1] >=0 and grid[new_coordinate] > 0:
+                    # If the new_coordinate is in the graph it means that it is a  node.
+                    if new_coordinate in graph:
+                        # Appending it to the list.
+                        closest.append(new_coordinate)
+                        # Changing the boolean Found to True. To start searching in the other direction.
+                        Found = True
+                else:
+                    break
+        # Returning the closest nodes.
+        print(closest)
+        return closest
+
+############ CODE BLOCK 220 ################
+
+def create_country_graphs(map_):
+    """
+    This function returns a list of all graphs of a country map, where the first graph is the highways and de rest are the cities.
+
+    :param map_: The country map
+    :type map_: Map
+    :return: A list of graphs
+    :rtype: list[Graph]
+    """
+    raise NotImplementedError("Please complete this method")
 
 
 ############ END OF CODE BLOCKS, START SCRIPT BELOW! ################
