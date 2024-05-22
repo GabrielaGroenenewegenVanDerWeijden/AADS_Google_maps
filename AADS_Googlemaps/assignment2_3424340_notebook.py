@@ -362,13 +362,13 @@ class Graph(GraphBluePrint):
             # Finding each neighbour node of the current node by checking every direction. 
             for neighbour in neighbours: 
                 speed = grid[neighbour]
-                neighbour_node, distance = self.find_next_node_in_adjacency_list(neighbour, (neighbour[0] - node[0] , neighbour[1] - node[1]))
+                neighbour_node, distance = self.find_next_node_in_adjacency_list(node, (neighbour[0] - node[0] , neighbour[1] - node[1]))
                 self.adjacency_list[node].add((neighbour_node, distance, int(speed)))
             
     
         # Om te checken.
-        for i,k in self.adjacency_list.items():
-            print(i,k)
+        #for i,k in self.adjacency_list.items():
+        #     print(i,k)
         
 
     def find_next_node_in_adjacency_list(self, node, direction):
@@ -387,15 +387,15 @@ class Graph(GraphBluePrint):
         current_node = node
 
         # Since node itself is one further we initialize 1
-        distance = 1
+        distance = 0
 
         # While the current_node is not in history .
-        while current_node not in self.adjacency_list or current_node == node:
+        while current_node not in self.adjacency_list.keys() or current_node == node:
             # Calculating the new coordinates of the current node when following the direction
-            current_node = (current_node[0] + direction[0], current_node[1] + direction[1])
+           
 
             distance += 1
-            
+            current_node = (current_node[0] + direction[0], current_node[1] + direction[1])
         return current_node, distance
 
 ############ CODE BLOCK 120 ################
@@ -773,7 +773,7 @@ def create_country_graphs(map_):
     :return: A list of graphs
     :rtype: list[Graph]
     """
-    raise NotImplementedError("Please complete this method")
+    print(map_)
 
 
 ############ END OF CODE BLOCKS, START SCRIPT BELOW! ################

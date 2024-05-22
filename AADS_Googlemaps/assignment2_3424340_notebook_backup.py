@@ -362,13 +362,13 @@ class Graph(GraphBluePrint):
             # Finding each neighbour node of the current node by checking every direction. 
             for neighbour in neighbours: 
                 speed = grid[neighbour]
-                neighbour_node, distance = self.find_next_node_in_adjacency_list(neighbour, (neighbour[0] - node[0] , neighbour[1] - node[1]))
+                neighbour_node, distance = self.find_next_node_in_adjacency_list(node, (neighbour[0] - node[0] , neighbour[1] - node[1]))
                 self.adjacency_list[node].add((neighbour_node, distance, int(speed)))
             
     
         # Om te checken.
         for i,k in self.adjacency_list.items():
-            print(i,k)
+             print(i,k)
         
 
     def find_next_node_in_adjacency_list(self, node, direction):
@@ -387,14 +387,20 @@ class Graph(GraphBluePrint):
         current_node = node
 
         # Since node itself is one further we initialize 1
-        distance = 1
+        distance = 0
 
         # While the current_node is not in history .
-        while current_node not in self.adjacency_list or current_node == node:
+        i = 0
+        while current_node not in self.adjacency_list.keys() or current_node == node:
             # Calculating the new coordinates of the current node when following the direction
-            current_node = (current_node[0] + direction[0], current_node[1] + direction[1])
+           
 
             distance += 1
+            current_node = (current_node[0] + direction[0], current_node[1] + direction[1])
+            i += 1
+            if i > 10:
+                print(node, direction)
+                break
             
         return current_node, distance
 
@@ -705,6 +711,75 @@ class BFSSolverFastestPath(BFSSolverShortestPath):
 
         # Returning the new cost.
         return new_cost
+
+############ CODE BLOCK 210 ################
+
+def coordinate_to_node(map_, graph, coordinate):
+    """
+    This function finds a path from a coordinate to its closest nodes.
+    A closest node is defined as the first node you encounter if you go a certain direction.
+    This means that unless the coordinate is a node, you will need to find two closest nodes.
+    If the coordinate is a node then return a list with only the coordinate itself.
+
+    :param map_: The map of the graph
+    :type map_: Map
+    :param graph: A Graph of the map
+    :type graph: Graph
+    :param coordinate: The coordinate from which we want to find the closest node in the graph
+    :type coordinate: tuple[int]
+    :return: This returns a list of closest nodes which contains either 1 or 2 nodes.
+    :rtype: list[tuple[int]]
+    """
+    # Initializing the grid.
+    grid = map_.grid
+
+    # Initializing the possible directions.
+    direction = [(1,0), (-1, 0), (0, 1), (0, -1)]
+
+    # Initializing the list of the closest nodes.
+    closest = []
+
+    # If the coordinate is a node then we return the coordinate in a list. This works.
+    if coordinate in graph:
+        closest.append(coordinate)
+        print(closest)
+        return closest
+    else:
+        # We have to look in all directions where the two closest nodes are.
+        for way in direction:
+            # We initialize a boolean until we have found the node and aftwer each direction we must reinitialize the coordinate.
+            Found = False
+            new_coordinate = coordinate
+            while not Found:
+                # Going towards the certain direction.
+                new_coordinate = (new_coordinate[0] + way[0], new_coordinate[1] + way[1])
+               
+                # Checking if valid, otherwise we break the loop and start againg looping towards another direction.
+                if new_coordinate[0] < grid.shape[0] and new_coordinate[1] < grid.shape[1] and new_coordinate[0] >= 0 and new_coordinate[1] >=0 and grid[new_coordinate] > 0:
+                    # If the new_coordinate is in the graph it means that it is a  node.
+                    if new_coordinate in graph:
+                        # Appending it to the list.
+                        closest.append(new_coordinate)
+                        # Changing the boolean Found to True. To start searching in the other direction.
+                        Found = True
+                else:
+                    break
+        # Returning the closest nodes.
+        print(closest)
+        return closest
+
+############ CODE BLOCK 220 ################
+
+def create_country_graphs(map_):
+    """
+    This function returns a list of all graphs of a country map, where the first graph is the highways and de rest are the cities.
+
+    :param map_: The country map
+    :type map_: Map
+    :return: A list of graphs
+    :rtype: list[Graph]
+    """
+    print(map_)
 
 
 ############ END OF CODE BLOCKS, START SCRIPT BELOW! ################
