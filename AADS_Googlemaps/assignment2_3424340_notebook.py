@@ -350,55 +350,25 @@ class Graph(GraphBluePrint):
         """
         This method does a depth-first/brute-force search for each node to find the edges of each node.
         """
+        # Initializing the stack.
+        stack = self.adjacency_list.keys()
 
-        # This code isn't DFS but also works.
-        """
-        adj_list = graph.adjacency_list
+        # Initializing the grid.
+        grid = map_.grid
 
-        # Initializing the list of the four possible directions
-        direction = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-       
-        for node in adj_list.keys():
+        # Looping through each node in the stack.
+        for node in stack:
+            neighbours = self.neighbour_coordinates(node)
             # Finding each neighbour node of the current node by checking every direction. 
-            for way in direction:
-                neighbour_node, distance, speed = self.find_next_node_in_adjacency_list(node, way)
-                # If the neighbour isn't none, (meaning that diststance and speed aren't none either)then we can add them in the adjacency list and vice versa.
-                if neighbour_node is not None and distance is not None and speed is not None: 
-                    adj_list[node].add((neighbour_node, distance, speed))
-                    #adj_list[neighbour_node].add((node, distance))
-
-        for i,k in adj_list.items():
-            print(i,k)
-        """
-        # Initializing stack and history. With the first node of the adjecency list.
-        stack = [list(self.adjacency_list.keys())[0]]
-        history = {list(self.adjacency_list.keys())[0]}
-
-        # Initializing the list of the four possible directions
-        direction = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-
-        # While the stack isn't empty
-        while stack: 
-            # We take the last node added. Because a stack works with LIFO logic.
-            current_node = stack.pop()
-
-            # If the current node is not in the history we add it.
-            if current_node not in history:
-                history.add(current_node)
+            for neighbour in neighbours: 
+                speed = grid[neighbour]
+                neighbour_node, distance = self.find_next_node_in_adjacency_list(neighbour, (neighbour[0] - node[0] , neighbour[1] - node[1]))
+                self.adjacency_list[node].add((neighbour_node, distance, int(speed)))
             
-            # Now searching for each direction if there is a neigbour node.
-            for way in direction:
-                neighbour_node, distance, speed = self.find_next_node_in_adjacency_list(current_node, way)
-                
-                # Checking if a neighbour node exists and if its not in history. Then the adjecency list gets updated and neighbour node is stacked.
-                if neighbour_node is not None and neighbour_node not in history:
-                    self.adjacency_list[current_node].add((neighbour_node, distance, speed))
-                    self.adjacency_list[neighbour_node].add((current_node, distance, speed))
-                    stack.append(neighbour_node)
-        
+    
         # Om te checken.
-        #for i,k in self.adjacency_list.items():
-        #    print(i,k)
+        for i,k in self.adjacency_list.items():
+            print(i,k)
         
 
     def find_next_node_in_adjacency_list(self, node, direction):
@@ -413,42 +383,20 @@ class Graph(GraphBluePrint):
         :rtype: tuple[int], int 
         """
 
-        # Initializing the grid.
-        grid = map_.grid
-
-        # Initializing the node.
+        # We initilize
         current_node = node
 
-        # Setting the distance to 0
-        distance = 0
+        # Since node itself is one further we initialize 1
+        distance = 1
 
-        # Initializing the list to keep track of the speed limits.
-        speed = []
-
-        # We keep changing the coordinates of the code towards the direction as long as it stays within the grid.
-        while True:
+        # While the current_node is not in history .
+        while current_node not in self.adjacency_list or current_node == node:
             # Calculating the new coordinates of the current node when following the direction
             current_node = (current_node[0] + direction[0], current_node[1] + direction[1])
 
-            if not (current_node[0] < grid.shape[0] and current_node[1] < grid.shape[1] and current_node[0] >= 0 and current_node[1] >= 0 and grid[current_node] != 0):
-                break
-            
-            # Adding the speed of that coordinate to the list.
-            speed.append(grid[current_node])
-            
-            # Adding the distance.
             distance += 1
-
-            # Checking we have reached the next by checking if the coordinates are in the adjacency list.
-            if current_node in self.adjacency_list.keys():
-                neighbour_node = current_node
-                # Calculating the mode
-                speed_limit = max(speed, key = speed.count)
-                
-                return neighbour_node, distance, int(speed_limit)
-           
-        # Otherwise there is no neighbour node. And return none?
-        return None, None, None
+            
+        return current_node, distance
 
 ############ CODE BLOCK 120 ################
 
@@ -557,9 +505,7 @@ class BFSSolverShortestPath():
         :return: The shortest route and the time it takes. The route consists of a list of nodes.
         :rtype: list[tuple[int]], float
         """       
-        #self.priorityqueue = [(source, 0)]
-        # Added a zero to make the tuple bigger to accommodate speed limit.
-        self.priorityqueue = [(source, 0, 0)]
+        self.priorityqueue = [(source, 0)]
         self.history = {source: (None, 0)}
         self.destination = destination
 
@@ -615,16 +561,19 @@ class BFSSolverShortestPath():
         while self.priorityqueue:
             # We have to sort the priority queue according to the node with the smallest cost (distance).
             self.priorityqueue.sort(key=lambda x: x[1])
-            current_node, distance, speed_limit  = self.priorityqueue.pop(0)
+            current_node, distance = self.priorityqueue.pop(0)
+            print("current_node", current_node)
 
             # If the base case is satisfied we can return the route and cost.
             if self.base_case(current_node):
                 return
 
             # Otherwise, we are gonna go through all the next possible steps. Plus taking into account the speed_limit and the distance.
-            for new_node, distance, speed_limit in self.next_step(current_node):
+            for new_node in self.next_step(current_node):
+                speed_limit = new_node[2]
+                distance = new_node[1]
                 new_cost = self.new_cost(current_node, distance, speed_limit)
-                self.step(current_node, new_node, new_cost, speed_limit)
+                self.step(current_node, new_node[0], new_cost, speed_limit)
 
 
     def base_case(self, node):
@@ -681,9 +630,11 @@ class BFSSolverShortestPath():
         :param speed_limit: The speed limit on the road from node to new_node. 
         :type speed_limit: float
         """
+        
+
         # First we need to check if we have already gone through the next node. If not we add it to our queue and add to our history as key and with the value the previous node.
         if new_node not in self.history:
-            self.priorityqueue.append((new_node, distance, speed_limit))
+            self.priorityqueue.append((new_node, distance))
             self.history[new_node] = (node, distance)
     
     def next_step(self, node):
@@ -695,15 +646,8 @@ class BFSSolverShortestPath():
         :return: A list with possible next nodes that can be visited from the current node.
         :rtype: list[tuple[int]]  
         """
-        # Initializing the te list.
-        pos_steps = []
 
-        # Looping throught every possible direction. However, since the graph has also the distance and speed, we take the only the node into consideration.
-        for direction in self.graph[node]:
-            pos_steps.append(direction)
-            
-        # Returning the possible steps.
-        return pos_steps
+        return self.graph[node]
 
 ############ CODE BLOCK 200 ################
 
@@ -754,11 +698,7 @@ class BFSSolverFastestPath(BFSSolverShortestPath):
         previous_cost = self.history[previous_node][1]
 
         # First we need to check if the vehicle's speed is greater than the speed limit. Otherwise, it is useless to drive on a road where we cannot drive to the speed limit.
-        if self.vehicle_speed >= speed_limit:
-            # Calculating the time by dividing the distance with the speed that the vehicle can go.
-            time = distance / speed_limit
-        else:
-            time = distance/ self.vehicle_speed
+        time = distance / min(speed_limit, self.vehicle_speed)
 
         # Calculating the new cost, by summing up the previous cost and the time the vehicle takes to ride that distance. 
         new_cost = previous_cost + time
