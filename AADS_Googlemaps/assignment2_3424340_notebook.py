@@ -43,7 +43,7 @@ class FloodFillSolver():
         self.queue = deque([source])
         self.history = {source: None}
         
-        # Initializing the destination and road_grid.
+        # Initializing the destination, source and road_grid.
         self.destination = destination
         self.road_grid = road_grid
 
@@ -74,13 +74,14 @@ class FloodFillSolver():
         # Initializing the path list and the initial current node as the destination.
         path = []
         current = self.destination
+        print("this is current", current)
 
         # For as long the node is not None it will be added to the path and the new current node is initialized using the dictionary of history.
         while current is not None:
             path.append(current)
             current = self.history[current]
 
-        # The source node is the first node in the history. This was done to make it work for 1.2 as well.
+        # The source is the first node in the history.
         source = list(self.history.keys())[0]
 
         # Calculating length according to Manhattan distance.
@@ -154,7 +155,7 @@ class FloodFillSolver():
 
         # Getting the indices of the current node.
         row, col = node[0], node[1]
-
+        print(node)
         # Initializing the te list.
         pos_steps = []
 
@@ -162,7 +163,7 @@ class FloodFillSolver():
         for direction in [(row + 1, col), (row, col + 1), (row, col - 1), (row - 1, col)]:
             if direction[0] < self.road_grid.shape[0] and direction[1] < self.road_grid.shape[1] and direction[0] >= 0 and direction[1] >=0 and self.road_grid[direction] != 0:
                 pos_steps.append(direction)
-        
+        print(pos_steps)
         # Returning the possible steps.
         return pos_steps
 
@@ -229,7 +230,6 @@ class Graph(GraphBluePrint):
                 if action not in history:
                     queue.append(action)
                     history.add(action)
-            
 
                     
     def adjacency_list_add_node(self, coordinate, actions):
@@ -449,7 +449,7 @@ class FloodFillSolverGraph(FloodFillSolver):
         # Returning the path and the length of the path.
         return path, length     
 
-    # def find_path(self):
+    #def find_path(self):
     #     """
     #     This method finds the shortest paths between the source node and the destination node.
     #     It also returns the length of the path. 
@@ -461,6 +461,7 @@ class FloodFillSolverGraph(FloodFillSolver):
     #     """
     #     raise NotImplementedError("Please complete this method")       
 
+    
     def next_step(self, node):
         """
         This method returns the next possible actions.
@@ -805,13 +806,126 @@ def find_path(coordinate_A, coordinate_B, map_, vehicle_speed, find_at_most=3):
     :return: The path between coordinate_A and coordinate_B. Also, return the cost.
     :rtype: list[tuple[int]], float
     """
+    # Initialing the paths from A and B
+    path_A = [coordinate_A]
+    path_B = [coordinate_B]
+
     # Finding the closest nodes A and B to the coordinates of A and B.
     print(coordinate_A, coordinate_B)
-    node_A = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = coordinate_A)
-    node_B = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = coordinate_B)
+    closest_nodes_A = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = coordinate_A)
+    closest_nodes_B = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = coordinate_B)
+    #print(Graph(map_))
+   
+    # Finding all the exits of the maps.
+    exits = map_.get_all_city_exits()
+    print(exits)
+    #print(Graph(map_))
+
+    # Finding the closest nodes of the exits in a set since all exits are equal.
+    nodes_exits = {}
+    for pos_exit in exits:
+        nodes_exits[pos_exit] = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = pos_exit)
+
+    print(nodes_exits)
+
+
+    """ 
+    # Initilizing the list of paths and their times.
+    paths_A = []
+    for node in closest_nodes_A:
+        for pos_exit in exits:
+            if pos_exit in Graph(map_):
+                path, time = BFSSolverFastestPath()(Graph(map_), node, pos_exit, vehicle_speed)
+                paths_A.append((path, time))
+
+    paths_B = []
+    for node in closest_nodes_B:
+        for pos_exit in exits:
+            if pos_exit in Graph(map_):
+                path, time = BFSSolverFastestPath()(Graph(map_), node, pos_exit, vehicle_speed)
+                paths_B.append((path, time))
+
+    print(paths_A)
+    print(paths_B)
+        
+   
+
+   
+   
     
-    print(node_A)
-    print(node_B)
+    # Next finding the fastest path to them.
+    fastest_paths = []
+    for node in closest_nodes_A:
+        fastest_paths.append((path, time))
+    print(fastest_paths)
+    fastet_to_node_A = min(fastest_paths, key = lambda x: x[1])
+
+    fastest_paths_B = []
+    for node in closest_nodes_B:
+        path, time = BFSSolverFastestPath()(Graph(map_), coordinate_B, node, vehicle_speed)
+        fastest_paths_B.append((path, time))
+    fastest_to_node_B = min(fastest_paths_B, key = lambda x: x[1])
+
+    print(fastest_to_node_A)
+    print(fastest_to_node_B)
+
+
+
+
+
+   
+    # Finding the cost of the going towards the two closest nodes of the coordinates.
+    # path_lengths_A = path_length(coordinate_A, node_A, map_, vehicle_speed)
+    # path_lengths_B = path_length(coordinate_B, node_B, map_, vehicle_speed)
+    fastest_paths_A = []
+    for node in node_A:
+        path, time =  BFSSolverFastestPath()(Graph(map_), coordinate_A, node, vehicle_speed)
+        fastest_paths_A.append((path,time))
+    print(fastest_paths_A)
+    #fastest_to_node_A = min(fastest_paths_A, key = lambda x: x[1])
+
+    fastest_paths_B = []
+    for node in node_B:
+         path, time = BFSSolverFastestPath()(Graph(map_), coordinate_B, node, vehicle_speed)
+         fastest_paths_B.append((path, time))
+    print(fastest_paths_B)
+    #fastest_to_node_B = min(fastest_paths_B, key = lambda x: x[1])
+
+    # Initializing the fastest path from the coordinate to the node.
+    #fastest_A = min(path_lengths_A, key = lambda x: x[1])
+    #fastest_B = min(path_lengths_B, key = lambda x: x[1])
+
+    # Appending the paths.
+    path_A.append(fastest_A)
+    path_A.append(fastest_B)
+
+    # Getting all the cite exits from the map.
+    exits = map_.get_all_city_exits()
+
+    # Now doing the same but for the exits.
+    path_length_exit_A = path_length(fastest_A[0], exits, map_, vehicle_speed)
+    path_length_exit_B = path_length(fastest_B[0], exits, map_, vehicle_speed)
+
+    fastest_exit_A = min(path_length_exit_A, key = lambda x: x[1])
+    fastest_exit_B = min(path_length_exit_B, key = lambda x: x[1])
+
+    # Appending the paths.
+    path_A.append(fastest_exit_A)
+    path_B.append(fastest_exit_B)
+
+    print(path_A)
+    print(path_B)
+    print(fastest_exit_A[0])
+    print(fastest_exit_B[0])
+    """
+
+    # Now finding the path between the two exits.
+    # Find which are the exits of the highways.
+    # Find in which city each coordinate is.
+    # Find the time it takes to travel between the nodes.
+    # All exits are equally good.
+    # If two nodes in the same city:
+        # check if the highway is faster --> However, does not mean to use them.
 
 
 ############ END OF CODE BLOCKS, START SCRIPT BELOW! ################

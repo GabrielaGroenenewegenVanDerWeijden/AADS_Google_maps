@@ -74,14 +74,13 @@ class FloodFillSolver():
         # Initializing the path list and the initial current node as the destination.
         path = []
         current = self.destination
-        print("this is current", current)
 
         # For as long the node is not None it will be added to the path and the new current node is initialized using the dictionary of history.
         while current is not None:
             path.append(current)
             current = self.history[current]
 
-        # The source is the first node in the history.
+        # The source is the fist node in the history.
         source = list(self.history.keys())[0]
 
         # Calculating length according to Manhattan distance.
@@ -230,6 +229,7 @@ class Graph(GraphBluePrint):
                 if action not in history:
                     queue.append(action)
                     history.add(action)
+            
 
                     
     def adjacency_list_add_node(self, coordinate, actions):
@@ -767,133 +767,6 @@ def coordinate_to_node(map_, graph, coordinate):
                 
         # Returning the closest nodes.
         return closest
-
-############ CODE BLOCK 220 ################
-
-def create_country_graphs(map_):
-    """
-    This function returns a list of all graphs of a country map, where the first graph is the highways and de rest are the cities.
-
-    :param map_: The country map
-    :type map_: Map
-    :return: A list of graphs
-    :rtype: list[Graph]
-    """
-    raise NotImplementedError("Please complete this method")
-
-############ CODE BLOCK 300 ################
-
-def path_length(coordinate, closest_nodes, map_, vehicle_speed):
-    return [(node, (abs(node[0] - coordinate[0]) + abs(node[1] - coordinate[1])) / min(vehicle_speed, map_[coordinate])) for node in closest_nodes] 
-
-def find_path(coordinate_A, coordinate_B, map_, vehicle_speed, find_at_most=3):
-    """
-    Find the optimal path according to the divide and conquer strategy from coordinate A to coordinate B.
-
-    See hints and rules above on how to do this.
-
-    :param coordinate_A: The start coordinate
-    :type coordinate_A: tuple[int]
-    :param coordinate_B: The end coordinate
-    :type coordinate_B: tuple[int]
-    :param map_: The map on which the path needs to be found
-    :type map_: Map
-    :param vehicle_speed: The maximum vehicle speed
-    :type vehicle_speed: float
-    :param find_at_most: The number of routes to find for each path finding algorithm, defaults to 3. 
-                         Note, that this is only needed if you did 2.3.
-    :type find_at_most: int, optional
-    :return: The path between coordinate_A and coordinate_B. Also, return the cost.
-    :rtype: list[tuple[int]], float
-    """
-    # Initialing the paths from A and B
-    path_A = [coordinate_A]
-    path_B = [coordinate_B]
-
-    # Finding the closest nodes A and B to the coordinates of A and B.
-    print(coordinate_A, coordinate_B)
-    closest_nodes_A = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = coordinate_A)
-    closest_nodes_B = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = coordinate_B)
-    print(Graph(map_))
-   
-    # Next finding the fastest path to them.
-    if len(closest_nodes_A) > 1:
-        fastest_paths = []
-        for node in closest_nodes_A:
-            path, time = BFSSolverFastestPath()(Graph(map_), coordinate_A, node, vehicle_speed)
-            fastest_paths.append((path, time))
-        print(fastest_paths)
-        fastet_to_node_A = min(fastest_paths, key = lambda x: x[1])
-    fastest_to_node_A = closest_nodes_A
-
-    if len(closest_nodes_B) > 1:
-        fastest_paths = []
-        for node in closest_nodes_B:
-            path, time = BFSSolverFastestPath()(Graph(map_), coordinate_B, node, vehicle_speed)
-            fastest_paths.append((path, time))
-        fastest_to_node_B = min(fastest_paths, key = lambda x: x[1])
-    fastest_to_node_B = closest_nodes_B
-
-    print(fastest_to_node_A)
-    print(fastest_to_node_B)
-
-
-
-
-
-    """ 
-    # Finding the cost of the going towards the two closest nodes of the coordinates.
-    # path_lengths_A = path_length(coordinate_A, node_A, map_, vehicle_speed)
-    # path_lengths_B = path_length(coordinate_B, node_B, map_, vehicle_speed)
-    fastest_paths_A = []
-    for node in node_A:
-        path, time =  BFSSolverFastestPath()(Graph(map_), coordinate_A, node, vehicle_speed)
-        fastest_paths_A.append((path,time))
-    print(fastest_paths_A)
-    #fastest_to_node_A = min(fastest_paths_A, key = lambda x: x[1])
-
-    fastest_paths_B = []
-    for node in node_B:
-         path, time = BFSSolverFastestPath()(Graph(map_), coordinate_B, node, vehicle_speed)
-         fastest_paths_B.append((path, time))
-    print(fastest_paths_B)
-    #fastest_to_node_B = min(fastest_paths_B, key = lambda x: x[1])
-
-    # Initializing the fastest path from the coordinate to the node.
-    #fastest_A = min(path_lengths_A, key = lambda x: x[1])
-    #fastest_B = min(path_lengths_B, key = lambda x: x[1])
-
-    # Appending the paths.
-    path_A.append(fastest_A)
-    path_A.append(fastest_B)
-
-    # Getting all the cite exits from the map.
-    exits = map_.get_all_city_exits()
-
-    # Now doing the same but for the exits.
-    path_length_exit_A = path_length(fastest_A[0], exits, map_, vehicle_speed)
-    path_length_exit_B = path_length(fastest_B[0], exits, map_, vehicle_speed)
-
-    fastest_exit_A = min(path_length_exit_A, key = lambda x: x[1])
-    fastest_exit_B = min(path_length_exit_B, key = lambda x: x[1])
-
-    # Appending the paths.
-    path_A.append(fastest_exit_A)
-    path_B.append(fastest_exit_B)
-
-    print(path_A)
-    print(path_B)
-    print(fastest_exit_A[0])
-    print(fastest_exit_B[0])
-    """
-
-    # Now finding the path between the two exits.
-    # Find which are the exits of the highways.
-    # Find in which city each coordinate is.
-    # Find the time it takes to travel between the nodes.
-    # All exits are equally good.
-    # If two nodes in the same city:
-        # check if the highway is faster --> However, does not mean to use them.
 
 
 ############ END OF CODE BLOCKS, START SCRIPT BELOW! ################
