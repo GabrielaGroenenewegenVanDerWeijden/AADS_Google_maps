@@ -43,9 +43,9 @@ class FloodFillSolver():
         self.queue = deque([source])
         self.history = {source: None}
         
-        # Initializing the destination, source and road_grid.
+        # Initializing the destination, source and road_grid as grid.
         self.destination = destination
-        self.road_grid = road_grid
+        self.grid = road_grid
 
         # Calling the main_loop.
         self.main_loop()
@@ -74,7 +74,6 @@ class FloodFillSolver():
         # Initializing the path list and the initial current node as the destination.
         path = []
         current = self.destination
-        print("this is current", current)
 
         # For as long the node is not None it will be added to the path and the new current node is initialized using the dictionary of history.
         while current is not None:
@@ -155,15 +154,15 @@ class FloodFillSolver():
 
         # Getting the indices of the current node.
         row, col = node[0], node[1]
-        print(node)
+
         # Initializing the te list.
         pos_steps = []
 
         # Looping throught every possible direction and checking if they are possible.
         for direction in [(row + 1, col), (row, col + 1), (row, col - 1), (row - 1, col)]:
-            if direction[0] < self.road_grid.shape[0] and direction[1] < self.road_grid.shape[1] and direction[0] >= 0 and direction[1] >=0 and self.road_grid[direction] != 0:
+            if direction[0] < self.grid.shape[0] and direction[1] < self.grid.shape[1] and direction[0] >= 0 and direction[1] >=0 and self.grid[direction] != 0:
                 pos_steps.append(direction)
-        print(pos_steps)
+  
         # Returning the possible steps.
         return pos_steps
 
