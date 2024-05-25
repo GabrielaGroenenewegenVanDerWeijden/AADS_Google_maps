@@ -43,9 +43,9 @@ class FloodFillSolver():
         self.queue = deque([source])
         self.history = {source: None}
         
-        # Initializing the destination, source and road_grid.
+        # Initializing the destination, source and road_grid as grid.
         self.destination = destination
-        self.road_grid = road_grid
+        self.grid = road_grid
 
         # Calling the main_loop.
         self.main_loop()
@@ -74,7 +74,6 @@ class FloodFillSolver():
         # Initializing the path list and the initial current node as the destination.
         path = []
         current = self.destination
-        print("this is current", current)
 
         # For as long the node is not None it will be added to the path and the new current node is initialized using the dictionary of history.
         while current is not None:
@@ -155,15 +154,15 @@ class FloodFillSolver():
 
         # Getting the indices of the current node.
         row, col = node[0], node[1]
-        print(node)
+
         # Initializing the te list.
         pos_steps = []
 
         # Looping throught every possible direction and checking if they are possible.
         for direction in [(row + 1, col), (row, col + 1), (row, col - 1), (row - 1, col)]:
-            if direction[0] < self.road_grid.shape[0] and direction[1] < self.road_grid.shape[1] and direction[0] >= 0 and direction[1] >=0 and self.road_grid[direction] != 0:
+            if direction[0] < self.grid.shape[0] and direction[1] < self.grid.shape[1] and direction[0] >= 0 and direction[1] >=0 and self.grid[direction] != 0:
                 pos_steps.append(direction)
-        print(pos_steps)
+  
         # Returning the possible steps.
         return pos_steps
 
@@ -656,63 +655,6 @@ class BFSSolverShortestPath():
         # Returning the next nodes.
         return self.graph[node]
 
-############ CODE BLOCK 200 ################
-
-class BFSSolverFastestPath(BFSSolverShortestPath):
-    """
-    A class instance should at least contain the following attributes after being called:
-        :param priorityqueue: A priority queue that contains all the nodes that need to be visited 
-                              including the time it takes to reach these nodes.
-        :type priorityqueue: list[tuple[tuple[int], float]]
-        :param history: A dictionary containing the nodes that will be visited and 
-                        as values the node that lead to this node and
-                        the time it takes to get to this node.
-        :type history: dict[tuple[int], tuple[tuple[int], float]]
-    """   
-    def __call__(self, graph, source, destination, vehicle_speed):      
-        """
-        This method gives a fastest route through the grid from source to destination.
-
-        This is the same as the `__call__` method from `BFSSolverShortestPath` except that 
-        we need to store the vehicle speed. 
-        
-        Here, you can see how we can overwrite the `__call__` method but 
-        still use the `__call__` method of BFSSolverShortestPath using `super`.
-        """
-
-        self.vehicle_speed = vehicle_speed
-        
-        return super(BFSSolverFastestPath, self).__call__(graph, source, destination)
-
-    def new_cost(self, previous_node, distance, speed_limit):
-        """
-        This is a helper method that calculates the new cost to go from the previous node to
-        a new node with a distance and speed_limit between the previous node and new node.
-
-        Use the `speed_limit` and `vehicle_speed` to determine the time/cost it takes to go to
-        the new node from the previous_node and add the time it took to reach the previous_node to it..
-
-        :param previous_node: The previous node that is the fastest way to get to the new node.
-        :type previous_node: tuple[int]
-        :param distance: The distance between the node and new_node
-        :type distance: int
-        :param speed_limit: The speed limit on the road from node to new_node. 
-        :type speed_limit: float
-        :return: The cost to reach the node.
-        :rtype: float
-        """
-        # Initializing the cost of the previous node
-        previous_cost = self.history[previous_node][1]
-
-        # First we need to check if the vehicle's speed is greater than the speed limit. Otherwise, it is useless to drive on a road where we cannot drive to the speed limit.
-        time = distance / min(speed_limit, self.vehicle_speed)
-
-        # Calculating the new cost, by summing up the previous cost and the time the vehicle takes to ride that distance. 
-        new_cost = float(previous_cost + time)
-
-        # Returning the new cost.
-        return new_cost
-
 ############ CODE BLOCK 210 ################
 
 def coordinate_to_node(map_, graph, coordinate):
@@ -768,19 +710,6 @@ def coordinate_to_node(map_, graph, coordinate):
         # Returning the closest nodes.
         return closest
 
-############ CODE BLOCK 220 ################
-
-def create_country_graphs(map_):
-    """
-    This function returns a list of all graphs of a country map, where the first graph is the highways and de rest are the cities.
-
-    :param map_: The country map
-    :type map_: Map
-    :return: A list of graphs
-    :rtype: list[Graph]
-    """
-    raise NotImplementedError("Please complete this method")
-
 ############ CODE BLOCK 300 ################
 
 def path_length(coordinate, closest_nodes, map_, vehicle_speed):
@@ -806,28 +735,68 @@ def find_path(coordinate_A, coordinate_B, map_, vehicle_speed, find_at_most=3):
     :return: The path between coordinate_A and coordinate_B. Also, return the cost.
     :rtype: list[tuple[int]], float
     """
-    # Initialing the paths from A and B
-    path_A = [coordinate_A]
-    path_B = [coordinate_B]
 
     # Finding the closest nodes A and B to the coordinates of A and B.
     print(coordinate_A, coordinate_B)
     closest_nodes_A = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = coordinate_A)
     closest_nodes_B = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = coordinate_B)
-    #print(Graph(map_))
+
+    # Looking which nodes is the closest to the coordinate. 
+    distances_A = path_length(coordinate_A, closest_nodes_A, map_, vehicle_speed)
+    distances_B = path_length(coordinate_B, closest_nodes_B, map_, vehicle_speed)
+    
+    print(distances_A)
+    print(distances_B)
+
+    # Finding the closest. Maybe not neede?
+    closest_A = min(distances_A, key = lambda x: x[1])
+    closest_B = min(distances_B, key = lambda x: x[1])
+
+
    
     # Finding all the exits of the maps.
     exits = map_.get_all_city_exits()
-    print(exits)
-    #print(Graph(map_))
 
-    # Finding the closest nodes of the exits in a set since all exits are equal.
+    # Finding the closest nodes to the exits.
     nodes_exits = {}
     for pos_exit in exits:
         nodes_exits[pos_exit] = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = pos_exit)
 
-    print(nodes_exits)
+    # for i in keyList:
+    #     d[i] = None
+    # print(d)
 
+    
+    path_time = {}
+
+    # Putting all paths and times in a dictionary, of every possible combination path.:
+    for node_A in closest_nodes_A:
+        for node_B in closest_nodes_B:
+            path_time[(node_A, node_B)] = BFSSolverFastestPath()(Graph(map_), node_A, node_B, vehicle_speed)
+            
+    print(path_time)
+    
+    fastest_path = path_time.values().sort(path_time.values(), key = lambda x: x[1])
+    print(fastest_path)
+    
+
+    # However, we still need to check if we use the exits. But all exits are equally good. So do i have to check this???
+
+    
+
+
+
+    # After that find the fastest path from the two exits
+    # Finnally check which path is faster.
+
+
+        # Now finding the path between the two exits.
+    # Find which are the exits of the highways.
+    # Find in which city each coordinate is.
+    # Find the time it takes to travel between the nodes.
+    # All exits are equally good.
+    # If two nodes in the same city:
+        # check if the highway is faster --> However, does not mean to use them.
 
     """ 
     # Initilizing the list of paths and their times.
@@ -868,11 +837,6 @@ def find_path(coordinate_A, coordinate_B, map_, vehicle_speed, find_at_most=3):
 
     print(fastest_to_node_A)
     print(fastest_to_node_B)
-
-
-
-
-
    
     # Finding the cost of the going towards the two closest nodes of the coordinates.
     # path_lengths_A = path_length(coordinate_A, node_A, map_, vehicle_speed)
@@ -918,14 +882,6 @@ def find_path(coordinate_A, coordinate_B, map_, vehicle_speed, find_at_most=3):
     print(fastest_exit_A[0])
     print(fastest_exit_B[0])
     """
-
-    # Now finding the path between the two exits.
-    # Find which are the exits of the highways.
-    # Find in which city each coordinate is.
-    # Find the time it takes to travel between the nodes.
-    # All exits are equally good.
-    # If two nodes in the same city:
-        # check if the highway is faster --> However, does not mean to use them.
 
 
 ############ END OF CODE BLOCKS, START SCRIPT BELOW! ################
