@@ -855,6 +855,47 @@ class BFSSolverMultipleFastestPaths(BFSSolverFastestPath):
         """
         raise NotImplementedError("Please complete this method")
 
+############ CODE BLOCK 235 ################
+
+class BFSSolverFastestPathMD(BFSSolverFastestPath):
+    def __call__(self, graph, source, destinations, vehicle_speed):      
+        """
+        This method is functionally no different than the call method of BFSSolverFastestPath
+        except for what `destination` is.
+
+        See for an explanation of all arguments `BFSSolverFastestPath`.
+        
+        :param destinations: The nodes where the path ends.
+        :type destinations: list[tuple[int]]
+        """
+        self.priorityqueue = [(source, 0)]
+        self.history = {source: (None, 0)}
+        self.destinations = destinations
+        self.destination = None
+        self.vehicle_speed = vehicle_speed   
+
+        self.graph = graph
+        # Calling the main_loop.
+        self.main_loop()
+    
+        # Returning the route and the cost, by using the find_path() function to compute them.
+        return self.find_path()
+        
+
+    def base_case(self, node):
+        """
+        This method checks if the base case is reached.
+
+        :param node: The current node
+        :type node: tuple[int]
+        :return: returns True if the base case is reached.
+        :rtype: bool
+        """
+        # If the node is one of the destinations we return True. Otherwise, False.
+        if node in self.destinations:
+            return True
+        return False
+
 ############ CODE BLOCK 300 ################
 
 def path_length(coordinate, closest_nodes, map_, vehicle_speed):
