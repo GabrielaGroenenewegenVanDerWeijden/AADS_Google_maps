@@ -229,7 +229,12 @@ class Graph(GraphBluePrint):
                 if action not in history:
                     queue.append(action)
                     history.add(action)
-
+        
+        # If we have a level five map we need to add the highway exits to the nodes.
+        if len(map_.city_corners) > 1: 
+            for pos_exit in map_.get_all_city_exits():
+                    self.adjacency_list[pos_exit] = set()
+                    
                     
     def adjacency_list_add_node(self, coordinate, actions):
         """
@@ -515,18 +520,14 @@ class BFSSolverShortestPath():
         self.history = {source: (None, 0)}
         self.destination = destination
 
-        # Initializing the source and the graph.
-        self.source = source
+        # Initializing the graph.
         self.graph = graph
 
         # Calling the main_loop.
         self.main_loop()
-
-        # Calculating the route and the cost (distance) of the path.
-        route, cost = self.find_path()
     
-        # Returning the route and the cost.
-        return route, cost   
+        # Returning the route and the cost, by using the find_path() function to compute them.
+        return self.find_path()
 
     def find_path(self):
         """
@@ -574,11 +575,8 @@ class BFSSolverShortestPath():
                 return
 
             # Otherwise, we are gonna go through all the next possible steps. Plus taking into account the speed_limit and the distance.
-            for new_node in self.next_step(current_node):
-                # Self.next_step return a tuple with first the coordinates of the node, the distance and third the speed limit.
-                next_node = new_node[0]
-                distance = new_node[1]
-                speed_limit = new_node[2]
+            for next_node, distance, speed_limit in self.next_step(current_node):
+                # Computing the new cost and calling step.
                 new_cost = self.new_cost(current_node, distance, speed_limit)
                 self.step(current_node, next_node, new_cost, speed_limit)
 
@@ -814,61 +812,107 @@ def find_path(coordinate_A, coordinate_B, map_, vehicle_speed, find_at_most=3):
     # Looking which nodes is the closest to the coordinate. 
     distances_A = path_length(coordinate_A, closest_nodes_A, map_, vehicle_speed)
     distances_B = path_length(coordinate_B, closest_nodes_B, map_, vehicle_speed)
-    
-    #print(distances_A)
-    #print(distances_B)
 
-    # Finding the closest. Maybe not neede?
+    # Finding the closest. Maybe not needed?
     closest_A = min(distances_A, key = lambda x: x[1])
     closest_B = min(distances_B, key = lambda x: x[1])
-
-    # Finding all the exits of the maps.
-    exits = map_.get_all_city_exits()
-    #print(exits)
-
-    # Initializing the list with the shapes of each city.
-    city_shapes = []
-    for city in map_.city_grids:
-        city_shapes.append(city.shape)
     
     # Making a list of the city corners
     city_corners = map_.city_corners
 
-    # Making a dictionary with as keys the shape of the cities and as values their shape.
-    city_shape_corners = {}
-    for city_shape in city_shapes:
-        for corner in city_corners:
-            city_shape_corners[city_shape] = corner
-            city_corners.remove(corner)
-            break
+    # Making a list of the city grids
+    city_grids = map_.city_grids
 
-    # Initializng dictionary of the city the coordinate is in. The city is identified by its corner.
-    coord_city = {}
-    for coordinate in (coordinate_A, coordinate_B):
-        for city_shape, corner in city_shape_corners.items():
-            if corner[0] <= coordinate[0]  and coordinate[0] < (corner[0] + city_shape[0]) and corner[1] <= coordinate[1] and coordinate[1] < (corner[1] + city_shape[1]):
-                coord_city[coordinate] = corner
-    print(coord_city)
+    # Searching in which city each coordinate is.
+    for corner in range(len(city_corners)):
+        if city_corners[corner][0] <= coordinate_A[0] and coordinate_A[0] < (city_corners[corner][0] + city_grids[corner].shape[0]) and city_corners[corner][1] <= coordinate_A[1] and coordinate_A[1] < (city_corners[corner][1] + city_grids[corner].shape[1]):
+            city_A = corner
+        if city_corners[corner][0] <= coordinate_B[0] and coordinate_B[0] < (city_corners[corner][0] + city_grids[corner].shape[0]) and city_corners[corner][1] <= coordinate_B[1] and coordinate_B[1] < (city_corners[corner][1] + city_grids[corner].shape[1]):
+            city_B = corner
 
-    # Now we can check if the coordinates are in the same city or not. 
-    corners = set()
-    for corner in coord_city.values():
-        corners.add(corner)
-
-    print(corners)
-    if len(list(corners)) ==  1:
-        print("Coordinates are in the same city")
-    else:
-        print("Coordinates are not in the same city")
-    
+    print(city_A, city_B)
+    # Looking if the coordinates are in the same city.
+    if city_A == city_B:
+        print("Yes they are in the same city.")
+        # path_time = {}
+        # for node_A in closest_nodes_A:
+        #     for node_B in closest_nodes_B:
+        #         print(city_grids[city_A])
+        #         path_time[(node_A, node_B)] = BFSSolverFastestPath()(city_grids[city_A], node_A, node_B, vehicle_speed)
         
+        # print(path_time)
+        # fastest_path = min(path_time.items(), key= lambda item: item[1][1])
+    
+
+    # Now applying our knowledge of divide and conquer. By looking the fastest route between the exits and using that one and then adding them to nodes that were fastest from the coordinate.
+
+    # Getting all the city exits. All exits are equally good.
+    exits = map_.get_all_city_exits()
+
+    exits_A = []
+    exits_B = []
+    for pos_exit in exits:
+        exits_A.append(BFSSolverFastestPath()(Graph(map_), pos_exit, closest_A[0], vehicle_speed))
+        exits_B.append(BFSSolverFastestPath()(Graph(map_), pos_exit, closest_B[0], vehicle_speed))
+    
+    exit_A = min(exits_A, key=lambda x: x[1])
+    exit_B = min(exits_B, key=lambda x: x[1])
+
+    
+   
+    # Calculating the distance between the exit nodes.
+    exit_path = BFSSolverFastestPath()(Graph(map_), exit_A[0][0], exit_B[0][0], vehicle_speed)
+
+    print(exit_path)
 
 
+    """ 
+    print("Coordinates are in the same city")
+    highway_path_time =  {}
 
+    exits = map_.get_all_city_exits()
+    # First exit
+    closest_exit_nodes_1 = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = exits[0])
+    closest_exits_length_1 = path_length(exits[0], closest_exit_nodes_1, map_, vehicle_speed)
+    closest_exit_node_1 = min(closest_exits_length_1, key = lambda x: x[1])
 
-    #So a coordinate in a individual city corresponds to a coordinate in the map using the `city_corners`.
+    # Second exit
+    closest_exit_nodes_2 = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = exits[1])
+    closest_exits_length_2 = path_length(exits[1], closest_exit_nodes_2, map_, vehicle_speed)
+    closest_exit_node_2 = min(closest_exits_length_2, key = lambda x: x[1])
 
-    # Initializing the path and the time dictionary.
+    for node_A in closest_nodes_A:
+        highway_path_time[(node_A, closest_exit_node_1[0])] = BFSSolverFastestPath()(Graph(map_), node_A, closest_exit_node_1[0], vehicle_speed)
+        path, time = BFSSolverFastestPath()(Graph(map_), closest_exit_node_1[0], closest_exit_node_2[0], vehicle_speed)
+        highway_path_time[(node_A, closest_exit_node_1[0])][0].append(path)
+        list(highway_path_time[(node_A, closest_exit_node_1[0])])[1] += time
+        for node_B in closest_nodes_B:
+            path, time = BFSSolverFastestPath()(Graph(map_), closest_exit_node_2[0], node_B, vehicle_speed)   
+            highway_path_time[(node_A, closest_exit_node_1[0])][0].append(path)
+            list(highway_path_time[(node_A, closest_exit_node_1[0])])[1] += time
+
+    # Finding the fastest path based on the cost, this outputs a tuple of the coordinates node_A, node_B and the path and the cost.
+    fastest_highway_path = min(highway_path_time.items(), key= lambda item: item[1][1])
+
+    path_time = {}
+    # Not including highway
+        # Putting all paths and times in a dictionary, of every possible combination path.
+    for node_A in closest_nodes_A:
+        for node_B in closest_nodes_B:
+            path_time[(node_A, node_B)] = BFSSolverFastestPath()(Graph(map_), node_A, node_B, vehicle_speed)
+    
+    # Finding the fastest path based on the cost, this outputs a tuple of the coordinates node_A, node_B and the path and the cost.
+    fastest_path = min(path_time.items(), key= lambda item: item[1][1])
+
+    if fastest_highway_path[1][-1] <= fastest_path[1][-1]:
+        print("Highwway_is faster")
+    else:
+        print("Through the city is faster")
+    return fastest_path[1][0], fastest_path[1][1]
+
+    print("Coordinates are not in the same city")
+        # Initializing the path and the time dictionary.
+    """
     path_time = {}
 
     # Putting all paths and times in a dictionary, of every possible combination path.
@@ -881,19 +925,6 @@ def find_path(coordinate_A, coordinate_B, map_, vehicle_speed, find_at_most=3):
     
     # Returning the fastest path and the cost.
     return fastest_path[1][0], fastest_path[1][1]
-    
-    
-
-    # However, we still need to check if we use the exits. But all exits are equally good. So do i have to check this???
-    # After that find the fastest path from the two exits
-    # Finnally check which path is faster.
-        # Now finding the path between the two exits.
-    # Find which are the exits of the highways.
-    # Find in which city each coordinate is.
-    # Find the time it takes to travel between the nodes.
-    # All exits are equally good.
-    # If two nodes in the same city:
-        # check if the highway is faster --> However, does not mean to use them.
 
 
 ############ END OF CODE BLOCKS, START SCRIPT BELOW! ################
