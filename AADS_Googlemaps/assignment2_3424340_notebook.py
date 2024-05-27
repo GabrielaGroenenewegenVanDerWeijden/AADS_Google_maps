@@ -229,11 +229,6 @@ class Graph(GraphBluePrint):
                 if action not in history:
                     queue.append(action)
                     history.add(action)
-        
-        # If we have a map with more than one city, we need to add the city exits to the adjacencly list as well.
-        if len(self.map.city_corners) > 1: 
-            for pos_exit in map_.get_all_city_exits():
-                    self.adjacency_list[pos_exit] = set()
                     
                     
     def adjacency_list_add_node(self, coordinate, actions):
@@ -279,12 +274,9 @@ class Graph(GraphBluePrint):
         # Initializing the te list.
         pos_steps = []
 
-        # Getting the grid.
-        grid = self.map.grid
-
         # Looping through all neighbour coordinates and checking if they are within bounds and not a building.
         for neighbour in [(row + 1, col), (row, col + 1), (row, col - 1), (row - 1, col)]:
-            if neighbour[0] < grid.shape[0] and neighbour[1] < grid.shape[1] and neighbour[0] >= 0 and neighbour[1] >=0 and grid[neighbour] != 0:
+            if neighbour[0] < self.map.shape[0] and neighbour[1] < self.map.shape[1] and neighbour[0] >= 0 and neighbour[1] >=0 and self.map[neighbour] != 0:
                 pos_steps.append(neighbour)
         
         return pos_steps   
@@ -360,9 +352,6 @@ class Graph(GraphBluePrint):
         # Initializing the stack.
         stack = self.adjacency_list.keys()
 
-        # Initializing the grid.
-        grid = self.map.grid
-
         # Looping through each node in the stack.
         for node in stack:
             # Finding all possible neighbours for the node.
@@ -371,7 +360,7 @@ class Graph(GraphBluePrint):
             for neighbour in neighbours: 
                 # Initializing the speed of the road by checking the speed on the conde of the edge. Since its stated above that we can assume that the speed limit
                 # does not change in the entirety of the road.
-                speed = grid[neighbour]
+                speed = self.map[neighbour]
                 # Computing the neigbour node and the distance of the node. The direction is calculated by the difference in the coordinates of the neighbour node and the node.
                 neighbour_node, distance = self.find_next_node_in_adjacency_list(node, (neighbour[0] - node[0] , neighbour[1] - node[1]))
                 # Updating the adjacency list with the neighbour node and distance.
@@ -776,7 +765,95 @@ def create_country_graphs(map_):
     :return: A list of graphs
     :rtype: list[Graph]
     """
-    raise NotImplementedError("Please complete this method")
+    # Initializing the city corners.
+    city_corners = map_.city_corners
+    
+    # Getting the highway map.
+    highway_map = map_.get_highway_map()
+
+    map_city = map_.get_city_map()
+
+    # Initializing the city graphs list.
+    city_graphs = []
+    for corner in city_corners:
+        city_graphs.append(Graph(map_city, start=corner))
+        
+    return [Graph(highway_map)] + city_graphs
+
+############ CODE BLOCK 230 ################
+
+class BFSSolverMultipleFastestPaths(BFSSolverFastestPath):
+    """
+    A class instance should at least contain the following attributes after being called:
+        :param priorityqueue: A priority queue that contains all the nodes that need to be visited including the time it takes to reach these nodes.
+        :type priorityqueue: list[tuple[tuple[int], float]]
+        :param history: A dictionary containing the nodes that are visited and as values the node that leads to this node including the time it takes from the start node.
+        :type history: dict[tuple[int], tuple[tuple[int], float]]
+        :param found_destinations: The destinations already found with Dijkstra.
+        :type found_destinations: list[tuple[int]]
+    """
+    def __init__(self, find_at_most=3):
+        """
+        This init makes it possible to make a different Dijkstra algorithm 
+        that find more or less destination nodes before it stops searching.
+
+        :param find_at_most: The number of found destination nodes before the algorithm stops
+        :type find_at_most: int
+        """
+        self.find_at_most = find_at_most
+    
+    def __call__(self, graph, sources, destinations, vehicle_speed):      
+        """
+        This method gives the top three fastest routes through the grid from any of the sources to any of the destinations.
+        You start at the sources and the algorithm ends if you reach enough destinations, both nodes should be included in the path.
+        A route consists of a list of nodes (which are coordinates).
+
+        :param graph: The graph that represents the map.
+        :type graph: Graph
+        :param sources: The nodes where the path starts and the time it took to get here.
+        :type sources: list[tuple[tuple[int], float]]
+        :param destinations: The nodes where the path ends and the time it took to get here.
+        :type destinations: list[tuple[tuple[int], float]]
+        :param vehicle_speed: The maximum speed of the vehicle.
+        :type vehicle_speed: float
+        :return: A list of the n fastest paths and time they take, sorted from fastest to slowest 
+        :rtype: list[tuple[path, float]], where path is a fictional data type consisting of a list[tuple[int]]
+        """       
+        self.priorityqueue = sorted(sources, key=lambda x:x[1])
+        self.history = {s: (None, t) for s, t in sources}
+        
+        self.destinations = destinations
+        self.destination_nodes = [dest[0] for dest in destinations]
+        self.found_destinations = []
+
+        raise NotImplementedError("Please complete this method")       
+
+    def find_n_paths(self):
+        """
+        This method needs to find the top `n` fastest paths between any source node and any destination node.
+        This does not mean that each source node has to be in a path nor that each destination node needs to be in a path.
+
+        Hint1: The fastest path is stored in each node by linking to the previous node. 
+               Therefore, if you start searching from a destination node,
+               you always find the optimal path from that destination node.
+               This is similar if you only had one destination node.         
+
+        :return: A list of the n fastest paths and time they take, sorted from fastest to slowest 
+        :rtype: list[tuple[path, float]], where path is a fictional data type consisting of a list[tuple[int]]
+        """
+        raise NotImplementedError("Please complete this method")       
+        
+    def base_case(self, node):
+        """
+        This method checks if the base case is reached and
+        updates self.found_destinations
+
+        :param node: The current node
+        :type node: tuple[int]
+        :return: Returns True if the base case is reached.
+        :rtype: bool
+        """
+        raise NotImplementedError("Please complete this method")
 
 ############ CODE BLOCK 300 ################
 
@@ -815,33 +892,31 @@ def find_path(coordinate_A, coordinate_B, map_, vehicle_speed, find_at_most=3):
     # Finding the closest. Maybe not needed?
     closest_A = min(distances_A, key = lambda x: x[1])
     closest_B = min(distances_B, key = lambda x: x[1])
+
+    # Making a list of the city and highway graphs.
+    highway_graph, *city_graphs = create_country_graphs(map_)
     
-    # Making a list of the city corners
-    city_corners = map_.city_corners
-
-    # Making a list of the city grids
-    city_grids = map_.city_grids
-
     # Searching in which city each coordinate is.
-    for corner in range(len(city_corners)):
-        if city_corners[corner][0] <= coordinate_A[0] and coordinate_A[0] < (city_corners[corner][0] + city_grids[corner].shape[0]) and city_corners[corner][1] <= coordinate_A[1] and coordinate_A[1] < (city_corners[corner][1] + city_grids[corner].shape[1]):
-            city_A = corner
-        if city_corners[corner][0] <= coordinate_B[0] and coordinate_B[0] < (city_corners[corner][0] + city_grids[corner].shape[0]) and city_corners[corner][1] <= coordinate_B[1] and coordinate_B[1] < (city_corners[corner][1] + city_grids[corner].shape[1]):
-            city_B = corner
+    for i, city in enumerate(city_graphs):
+        if closest_A[0] in city:
+            city_A = i
+        if closest_B[0] in city:
+            city_B = i
 
+    print(city_A, city_B)
     # Looking if the coordinates are in the same city.
     if city_A == city_B:
-        print("Yes they are in the same city.")
-        path_time = {}
-    
-        print(city_grids[city_A])
-        path, time = BFSSolverFastestPath()(Graph(city_grids[city_A]), closest_A[0], closest_B[0], vehicle_speed)
+          print("Yes they are in the same city.")
+          path_time = {}
+          path, time = BFSSolverFastestPath()(city_graphs[city_A], closest_A[0], closest_B[0], vehicle_speed)
+          print(path, time)
 
     # Getting all the city exits. All exits are equally good.
     exits = map_.get_all_city_exits()
 
     exits_A = []
     exits_B = []
+    
     for pos_exit in exits:
         exits_A.append(BFSSolverFastestPath()(Graph(map_), pos_exit, closest_A[0], vehicle_speed))
         exits_B.append(BFSSolverFastestPath()(Graph(map_), pos_exit, closest_B[0], vehicle_speed))
