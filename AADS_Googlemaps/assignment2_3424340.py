@@ -10,6 +10,162 @@ from collections import defaultdict, deque
 
 RNG = np.random.default_rng()
 
+############ CODE BLOCK 1 ################
+
+class FloodFillSolver():
+    """
+    A class instance should at least contain the following attributes after being called:
+        :param queue: A queue that contains all the coordinates that need to be visited.
+        :type queue: collections.deque
+        :param history: A dictionary containing the coordinates that will be visited and as values the coordinate that lead to this coordinate.
+        :type history: dict[tuple[int], tuple[int]]
+    """
+    
+    def __call__(self, road_grid, source, destination):
+        """
+        This method gives a shortest route through the grid from source to destination.
+        You start at the source and the algorithm ends if you reach the destination, both coordinates should be included in the path.
+        To find the shortest route a version of a flood fill algorithm is used, see the explanation above.
+        A route consists of a list of coordinates.
+
+        Hint: The history is already given as a dictionary with as keys the coordinates in the state-space graph and
+        as values the previous coordinate from which this coordinate was visited.
+
+        :param road_grid: The array containing information where a house (zero) or a road (one) is.
+        :type road_grid: np.ndarray[(Any, Any), int]
+        :param source: The coordinate where the path starts.
+        :type source: tuple[int]
+        :param destination: The coordinate where the path ends.
+        :type destination: tuple[int]
+        :return: The shortest route, which consists of a list of coordinates and the length of the route.
+        :rtype: list[tuple[int]], float
+        """
+        self.queue = deque([source])
+        self.history = {source: None}
+        
+        # Initializing the destination, source and road_grid as grid.
+        self.destination = destination
+        self.grid = road_grid
+
+        # Calling the main_loop.
+        self.main_loop()
+
+        # Calculating the path and the length of the path.
+        path, length = self.find_path()
+
+        # Returning the path and the length of the path.
+        return path, length
+
+    def find_path(self):
+        """
+        This method finds the shortest paths between the source node and the destination node.
+        It also returns the length of the path. 
+        
+        Note, that going from one coordinate to the next has a length of 1.
+        For example: The distance between coordinates (0,0) and (0,1) is 1 and 
+                     The distance between coordinates (3,0) and (3,3) is 3. 
+
+        The distance is the Manhattan distance of the path.
+
+        :return: A path that is the optimal route from source to destination and its length.
+        :rtype: list[tuple[int]], float
+        """
+
+        # Initializing the path list and the initial current node as the destination.
+        path = []
+        current = self.destination
+
+        # For as long the node is not None it will be added to the path and the new current node is initialized using the dictionary of history.
+        while current is not None:
+            path.append(current)
+            current = self.history[current]
+
+        # The source is the first node in the history.
+        source = list(self.history.keys())[0]
+
+        # Calculating length according to Manhattan distance.
+        length = np.absolute (source[0] - self.destination[0]) + np.absolute (source[1] - self.destination[1])
+
+        # Reverse the path to get it from source to destination.
+        path = path[::-1]
+        
+        # Returning the path and the length (as a float).
+        return path, float(length)
+              
+    def main_loop(self):
+        """
+        This method contains the logic of the flood-fill algorithm for the shortest path problem.
+
+        It does not have any inputs nor outputs. 
+        Hint, use object attributes to store results.
+        """
+        # While the queue is not empty a new current node.
+        while self.queue:
+            # We take the fist node in the queue and check if the base case is satisfied or not. If it is satisfied the loop stops and returns to the call function.
+            # Finally, from there the path and length can be returned since they computed.
+            node = self.queue.popleft()
+            if self.base_case(node):
+                return
+
+            # Otherwise, we are gonna go through all the next possible steps.
+            for new_node in self.next_step(node):
+                self.step(node, new_node)
+        
+
+    def base_case(self, node):
+        """
+        This method checks if the base case is reached.
+
+        :param node: The current node/coordinate
+        :type node: tuple[int]
+        :return: This returns if the base case is found or not
+        :rtype: bool
+        """
+        # The base case is that the current node is the destination. Thus when 
+        # we return true we know we have found the destination.
+        if node == self.destination:
+            return True
+        return False
+        
+        
+    def step(self, node, new_node):
+        """
+        One flood-fill step.
+
+        :param node: The current node/coordinate
+        :type node: tuple[int]
+        :param new_node: The next node/coordinate that can be visited from the current node/coordinate
+        :type new_node: tuple[int]       
+        """
+        # First we need to check if we have already gone through the next node. If not we add it to our queue and add to our history as key and with the value the previous node.
+        if new_node not in self.history:
+            self.queue.append(new_node)
+            self.history[new_node] = node
+
+    def next_step(self, node):
+        """
+        This method returns the next possible actions.
+
+        :param node: The current node/coordinate
+        :type node: tuple[int]
+        :return: A list with possible next coordinates that can be visited from the current coordinate.
+        :rtype: list[tuple[int]]  
+        """
+
+        # Getting the indices of the current node.
+        row, col = node[0], node[1]
+
+        # Initializing the te list.
+        pos_steps = []
+
+        # Looping throught every possible direction and checking if they are possible.
+        for direction in [(row + 1, col), (row, col + 1), (row, col - 1), (row - 1, col)]:
+            if direction[0] < self.grid.shape[0] and direction[1] < self.grid.shape[1] and direction[0] >= 0 and direction[1] >=0 and self.grid[direction] != 0:
+                pos_steps.append(direction)
+  
+        # Returning the possible steps.
+        return pos_steps
+
 ############ CODE BLOCK 10 ################
 
 class GraphBluePrint():
@@ -624,49 +780,80 @@ def create_country_graphs(map_):
         
     return [Graph(highway_map)] + city_graphs
 
-############ CODE BLOCK 235 ################
+############ CODE BLOCK 230 ################
 
-class BFSSolverFastestPathMD(BFSSolverFastestPath):
-    def __call__(self, graph, source, destinations, vehicle_speed):      
+class BFSSolverMultipleFastestPaths(BFSSolverFastestPath):
+    """
+    A class instance should at least contain the following attributes after being called:
+        :param priorityqueue: A priority queue that contains all the nodes that need to be visited including the time it takes to reach these nodes.
+        :type priorityqueue: list[tuple[tuple[int], float]]
+        :param history: A dictionary containing the nodes that are visited and as values the node that leads to this node including the time it takes from the start node.
+        :type history: dict[tuple[int], tuple[tuple[int], float]]
+        :param found_destinations: The destinations already found with Dijkstra.
+        :type found_destinations: list[tuple[int]]
+    """
+    def __init__(self, find_at_most=3):
         """
-        This method is functionally no different than the call method of BFSSolverFastestPath
-        except for what `destination` is.
+        This init makes it possible to make a different Dijkstra algorithm 
+        that find more or less destination nodes before it stops searching.
 
-        See for an explanation of all arguments `BFSSolverFastestPath`.
-        
-        :param destinations: The nodes where the path ends.
-        :type destinations: list[tuple[int]]
+        :param find_at_most: The number of found destination nodes before the algorithm stops
+        :type find_at_most: int
         """
-        self.priorityqueue = [(source, 0)]
-        self.history = {source: (None, 0)}
-        self.destinations = destinations
-        #self.destination = None
-        self.vehicle_speed = vehicle_speed   
+        self.find_at_most = find_at_most
     
-        # Initializing the graph.
-        self.graph = graph
+    def __call__(self, graph, sources, destinations, vehicle_speed):      
+        """
+        This method gives the top three fastest routes through the grid from any of the sources to any of the destinations.
+        You start at the sources and the algorithm ends if you reach enough destinations, both nodes should be included in the path.
+        A route consists of a list of nodes (which are coordinates).
 
-        # Calling the main_loop.
-        self.main_loop()
-
-        return self.find_path()
+        :param graph: The graph that represents the map.
+        :type graph: Graph
+        :param sources: The nodes where the path starts and the time it took to get here.
+        :type sources: list[tuple[tuple[int], float]]
+        :param destinations: The nodes where the path ends and the time it took to get here.
+        :type destinations: list[tuple[tuple[int], float]]
+        :param vehicle_speed: The maximum speed of the vehicle.
+        :type vehicle_speed: float
+        :return: A list of the n fastest paths and time they take, sorted from fastest to slowest 
+        :rtype: list[tuple[path, float]], where path is a fictional data type consisting of a list[tuple[int]]
+        """       
+        self.priorityqueue = sorted(sources, key=lambda x:x[1])
+        self.history = {s: (None, t) for s, t in sources}
         
+        self.destinations = destinations
+        self.destination_nodes = [dest[0] for dest in destinations]
+        self.found_destinations = []
 
+        raise NotImplementedError("Please complete this method")       
 
+    def find_n_paths(self):
+        """
+        This method needs to find the top `n` fastest paths between any source node and any destination node.
+        This does not mean that each source node has to be in a path nor that each destination node needs to be in a path.
+
+        Hint1: The fastest path is stored in each node by linking to the previous node. 
+               Therefore, if you start searching from a destination node,
+               you always find the optimal path from that destination node.
+               This is similar if you only had one destination node.         
+
+        :return: A list of the n fastest paths and time they take, sorted from fastest to slowest 
+        :rtype: list[tuple[path, float]], where path is a fictional data type consisting of a list[tuple[int]]
+        """
+        raise NotImplementedError("Please complete this method")       
+        
     def base_case(self, node):
         """
-        This method checks if the base case is reached.
+        This method checks if the base case is reached and
+        updates self.found_destinations
 
         :param node: The current node
         :type node: tuple[int]
-        :return: returns True if the base case is reached.
+        :return: Returns True if the base case is reached.
         :rtype: bool
         """
-        # If the node is one of the destinations we return True. Otherwise, False.
-        if node in self.destinations:
-            self.destination = node
-            return True
-        return False
+        raise NotImplementedError("Please complete this method")
 
 
 ############ END OF CODE BLOCKS, START SCRIPT BELOW! ################
