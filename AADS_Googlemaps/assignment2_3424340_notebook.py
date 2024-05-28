@@ -946,7 +946,6 @@ def find_path(coordinate_A, coordinate_B, map_, vehicle_speed, find_at_most=3):
             city_A = i
         if closest_B[0] in city:
             city_B = i
-
         
     # Getting all the city exits. All exits are equally good.
     exits = map_.get_all_city_exits()
@@ -968,10 +967,8 @@ def find_path(coordinate_A, coordinate_B, map_, vehicle_speed, find_at_most=3):
     # Now we need to add the distance between the coordinate to their closest nodes.
     total_cost = cost_A_exit + exit_cost + cost_B_exit + closest_A[1] + closest_B[1] 
 
-
      # Looking if the coordinates are in the same city.
     if city_A == city_B:
-        print("Yes they are in the same city.")
         if len(closest_nodes_A) == 1:
             path_city, cost_city =  BFSSolverFastestPathMD()(city_graphs[city_A], closest_nodes_A[0], closest_nodes_B, vehicle_speed)
         elif len(closest_nodes_B) == 1:
@@ -986,7 +983,6 @@ def find_path(coordinate_A, coordinate_B, map_, vehicle_speed, find_at_most=3):
             cost_city = cost2
         print(cost_city, total_cost)
         if cost_city < total_cost:
-            print("this is true")
             return path_city, cost_city
 
     return total_path, total_cost
