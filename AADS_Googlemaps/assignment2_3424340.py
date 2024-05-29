@@ -50,11 +50,8 @@ class FloodFillSolver():
         # Calling the main_loop.
         self.main_loop()
 
-        # Calculating the path and the length of the path.
-        path, length = self.find_path()
-
         # Returning the path and the length of the path.
-        return path, length
+        return self.find_path()
 
     def find_path(self):
         """
@@ -99,17 +96,18 @@ class FloodFillSolver():
         It does not have any inputs nor outputs. 
         Hint, use object attributes to store results.
         """
-        # While the queue is not empty a new current node.
+        # While the queue is not empty we search the node. 
         while self.queue:
-            # We take the fist node in the queue and check if the base case is satisfied or not. If it is satisfied the loop stops and returns to the call function.
-            # Finally, from there the path and length can be returned since they computed.
-            node = self.queue.popleft()
-            if self.base_case(node):
+            # Initializing the current node.
+            current = self.queue.popleft()
+
+            # Checking if it satisfies the base case.
+            if self.base_case(current):
                 return
 
             # Otherwise, we are gonna go through all the next possible steps.
-            for new_node in self.next_step(node):
-                self.step(node, new_node)
+            for new_node in self.next_step(current):
+                self.step(current, new_node)
         
 
     def base_case(self, node):
@@ -121,8 +119,8 @@ class FloodFillSolver():
         :return: This returns if the base case is found or not
         :rtype: bool
         """
-        # The base case is that the current node is the destination. Thus when 
-        # we return true we know we have found the destination.
+    
+        # When our node is equal to the destination node. We have completed our path.
         if node == self.destination:
             return True
         return False
@@ -212,10 +210,9 @@ class Graph(GraphBluePrint):
         queue = deque([self.start])
         history = {self.start}
 
-
         # Looping through the queue until it is empty.
         while queue:
-            # In the first loop the current node would be 'self.start', from there after each iteration it would be the next node in the queue.   
+            # Initializing the current node.
             current = queue.popleft()
 
             # Finding the possible actions using the neighbour_coordinates function.
@@ -248,9 +245,8 @@ class Graph(GraphBluePrint):
         # Determining the number of actions.
         n_actions = len(actions)
 
-        # According to the ammount of possible actions we can deduce whether the coordinate is a cross node. 1 meaning it a deadend, 3 & 4 cross node/junction node. 
-        # Hoewever, if it's 2 doesn't neccesarily mean it a corner because it can be an edge as well. Thus, we specify if its indeed a corner.
-        # We do this by checking if the two actions aren't on the same row and that the two actions aren't on the same column.
+        # If the number of actions is one, then it is a deadend, if the number of actions are 3 or four then it is a junction. Hoewer, if the number
+        # of actions are two the node can be an edje or a corner, therefore we check it.
         if n_actions != 2 or (actions[0][0] != actions[1][0] and actions[0][1] != actions[1][1]):
             self.adjacency_list[coordinate] = set()
         
@@ -265,8 +261,6 @@ class Graph(GraphBluePrint):
         :return: A list with possible next coordinates that can be visited from the current coordinate.
         :rtype: list[tuple[int]]  
         """
-    
-        # Mostly the same function as the flood fill above.
 
         # Getting the indices of the current node.
         row, col = coordinate[0], coordinate[1]
@@ -354,22 +348,22 @@ class Graph(GraphBluePrint):
 
         # Looping through each node in the stack.
         for node in stack:
+
             # Finding all possible neighbours for the node.
             neighbours = self.neighbour_coordinates(node)
-            # Finding all the edges in the direction of the neighbours of the node.
+    
+            # Looping through each direction a neighbour exists.
             for neighbour in neighbours: 
-                # Initializing the speed of the road by checking the speed on the conde of the edge. Since its stated above that we can assume that the speed limit
-                # does not change in the entirety of the road.
+                
+                # Getting the speed of the road, by checking the speed of the neighbour, since the speed doesn't change along the road.
                 speed = self.map[neighbour]
-                # Computing the neigbour node and the distance of the node. The direction is calculated by the difference in the coordinates of the neighbour node and the node.
+
+                # Initialiing the neigbour and the distance, in the direction of the neighbour. 
                 neighbour_node, distance = self.find_next_node_in_adjacency_list(node, (neighbour[0] - node[0] , neighbour[1] - node[1]))
+                
                 # Updating the adjacency list with the neighbour node and distance.
                 self.adjacency_list[node].add((neighbour_node, distance, speed))
             
-    
-        # Om te checken.
-        # for i,k in self.adjacency_list.items():
-        #      print(i,k)
         
 
     def find_next_node_in_adjacency_list(self, node, direction):
@@ -384,16 +378,14 @@ class Graph(GraphBluePrint):
         :rtype: tuple[int], int 
         """
 
-        # We initilize
+        # Initializing the current node.
         current_node = node
 
-        # Since node itself is one further we initialize 1
+        # Setting the distance to zero.
         distance = 0
 
-        # While the current_node is not found in the adjacency means that is not a node and we have to check for the first instance that the current node is definetly node.
-        # Thus adding current_node == node, after that current_node gets updated.
+        # While the current node is not a node or not the initial node. We keep going towards the direction.
         while current_node not in self.adjacency_list.keys() or current_node == node:
-            # Calculating the new coordinates of the current node when following the direction
             distance += 1
             current_node = (current_node[0] + direction[0], current_node[1] + direction[1])
         return current_node, distance
@@ -436,24 +428,8 @@ class FloodFillSolverGraph(FloodFillSolver):
         # Calling the main_loop.
         self.main_loop()
 
-        # Calculating the path and the length of the path.
-        path, length = self.find_path()
-
         # Returning the path and the length of the path.
-        return path, length     
-
-    #def find_path(self):
-    #     """
-    #     This method finds the shortest paths between the source node and the destination node.
-    #     It also returns the length of the path. 
-        
-    #     Note, that going from one node to the next has a length of 1.
-
-    #     :return: A path that is the optimal route from source to destination and its length.
-    #     :rtype: list[tuple[int]], float
-    #     """
-    #     raise NotImplementedError("Please complete this method")       
-
+        return self.find_path()       
     
     def next_step(self, node):
         """
@@ -468,8 +444,8 @@ class FloodFillSolverGraph(FloodFillSolver):
         # Initializing the te list.
         pos_steps = []
 
-        # Looping throught every possible direction. Hoever, since the graph has also the distance and speed, we take the only the node into consideration.
-        for direction in list(self.graph[node]):
+        # Looping throught every possible direction. However, since the graph has also the distance and speed, we take the only the node into consideration.
+        for direction in self.graph[node]:
             pos_steps.append(direction[0])
             
         # Returning the possible steps.
@@ -528,11 +504,11 @@ class BFSSolverShortestPath():
         :return: A path that is the optimal route from source to destination and its length.
         :rtype: list[tuple[int]], float
         """
-        # Initializing the route list and the initial current node as the destination.
+        # Initializing the route list and the current node.
         route = []
         current = self.destination
 
-        # For as long the node is not None it will be added to the route and the new current node is initialized using the dictionary of history.
+        # For as long the current node is not None it will be added to the route and added to history.
         while current is not None:
             route.append(current)
             current = self.history[current][0]
@@ -553,7 +529,7 @@ class BFSSolverShortestPath():
         It does not have any inputs nor outputs. 
         Hint, use object attributes to store results.
         """
-         # While the priority queue is not empty.
+        # While the priority queue is not empty.
         while self.priorityqueue:
             # We have to sort the priority queue according to the node with the smallest cost (distance).
             self.priorityqueue.sort(key=lambda x: x[1])
@@ -579,8 +555,7 @@ class BFSSolverShortestPath():
         :return: Returns True if the base case is reached.
         :rtype: bool
         """
-        # The base case is that the current node is the destination. Thus when 
-        # we return true we know we have found the destination.
+        #When our node is equal to the destination node. We have completed our path.
         if node == self.destination:
             return True
         return False
@@ -603,12 +578,9 @@ class BFSSolverShortestPath():
         """
         # Initializing the cost of the previous node
         previous_cost = self.history[previous_node][1]
-
-        # Calculate the new cost (as a float) as the sum of the previous cost and the distance.
-        new_cost = float(previous_cost + distance)
     
         # Returning the new cost.
-        return new_cost
+        return previous_cost + distance
 
     def step(self, node, new_node, distance, speed_limit):
         """
@@ -624,7 +596,7 @@ class BFSSolverShortestPath():
         :type speed_limit: float
         """
 
-        # First we need to check if we have already gone through the next node. If not we add it to our queue and add to our history as key and with the value the previous node.
+        # If the new_node is not in history, it is added to the history and the priority queue.
         if new_node not in self.history:
             self.priorityqueue.append((new_node, distance))
             self.history[new_node] = (node, distance)
@@ -690,14 +662,11 @@ class BFSSolverFastestPath(BFSSolverShortestPath):
         # Initializing the cost of the previous node
         previous_cost = self.history[previous_node][1]
 
-        # First we need to check if the vehicle's speed is greater than the speed limit. Otherwise, it is useless to drive on a road where we cannot drive to the speed limit.
+        # The time is the distance divided by the speed_limit of the vehicle speed, depending on which is smaller.
         time = distance / min(speed_limit, self.vehicle_speed)
 
-        # Calculating the new cost, by summing up the previous cost and the time the vehicle takes to ride that distance. 
-        new_cost = float(previous_cost + time)
-
         # Returning the new cost.
-        return new_cost
+        return previous_cost + time
 
 ############ CODE BLOCK 210 ################
 
@@ -717,42 +686,40 @@ def coordinate_to_node(map_, graph, coordinate):
     :return: This returns a list of closest nodes which contains either 1 or 2 nodes.
     :rtype: list[tuple[int]]
     """
+
+    # If the coordinate is a node then we return the coordinate in a list. Otherwise, we'll check for the closest nodes.
+    if coordinate in graph:
+        return [coordinate]
+    
     # Initializing the grid.
     grid = map_.grid
-
-    # Initializing the possible directions.
-    direction = [(1,0), (-1, 0), (0, 1), (0, -1)]
 
     # Initializing the list of the closest nodes.
     closest = []
 
-    # If the coordinate is a node then we return the coordinate in a list.
-    if coordinate in graph:
-        closest.append(coordinate)
-        return closest
-    else:
-        # We have to look in all directions where the two closest nodes are.
-        for way in direction:
-            # We initialize a boolean until we have found the node and aftwer each direction we must reinitialize the coordinate.
-            Found = False
-            new_coordinate = coordinate
-            while not Found:
-                # Going towards the certain direction.
-                new_coordinate = (new_coordinate[0] + way[0], new_coordinate[1] + way[1])
-               
-                # Checking if valid, otherwise we break the loop and start againg looping towards another direction.
-                if new_coordinate[0] < grid.shape[0] and new_coordinate[1] < grid.shape[1] and new_coordinate[0] >= 0 and new_coordinate[1] >=0 and grid[new_coordinate] > 0:
-                    # If the new_coordinate is in the graph it means that it is a  node.
-                    if new_coordinate in graph:
-                        # Appending it to the list.
-                        closest.append(new_coordinate)
-                        # Changing the boolean Found to True. To start searching in the other direction.
-                        Found = True
-                else:
-                    break
-                
-        # Returning the closest nodes.
-        return closest
+    # Initializing the possible directions.
+    direction = [(1,0), (-1, 0), (0, 1), (0, -1)]
+
+    # Going through each direction.
+    for way in direction:
+        # We initialize a boolean until we have found the node and aftwer each direction we must reinitialize the coordinate.
+        Found = False
+        new_coordinate = coordinate
+        while not Found:
+            
+            new_coordinate = (new_coordinate[0] + way[0], new_coordinate[1] + way[1])
+            
+            # Checking if the new_coordinare is valid.
+            if new_coordinate[0] < grid.shape[0] and new_coordinate[1] < grid.shape[1] and new_coordinate[0] >= 0 and new_coordinate[1] >=0 and grid[new_coordinate] > 0:
+                # If the new_coordinate is in the graph it means that it is a  node and therefor we can start the loop againg for another way.
+                if new_coordinate in graph:
+                    closest.append(new_coordinate)
+                    Found = True
+            else:
+                break
+
+    # Returning the closest nodes.
+    return closest
 
 ############ CODE BLOCK 220 ################
 
@@ -771,6 +738,7 @@ def create_country_graphs(map_):
     # Getting the highway map.
     highway_map = map_.get_highway_map()
 
+    # Getting the city map withoud the highways.
     map_city = map_.get_city_map()
 
     # Initializing the city graphs list.
@@ -871,7 +839,7 @@ class BFSSolverFastestPathMD(BFSSolverFastestPath):
         self.priorityqueue = [(source, 0)]
         self.history = {source: (None, 0)}
         self.destinations = destinations
-        #self.destination = None
+        self.destination = None
         self.vehicle_speed = vehicle_speed   
     
         # Initializing the graph.
@@ -880,9 +848,9 @@ class BFSSolverFastestPathMD(BFSSolverFastestPath):
         # Calling the main_loop.
         self.main_loop()
 
+        # Retuning the path and cost.
         return self.find_path()
         
-
 
     def base_case(self, node):
         """
@@ -929,59 +897,63 @@ def find_path(coordinate_A, coordinate_B, map_, vehicle_speed, find_at_most=3):
     closest_nodes_A = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = coordinate_A)
     closest_nodes_B = coordinate_to_node(map_ = map_, graph = Graph(map_), coordinate = coordinate_B)
 
-    # Looking which nodes is the closest to the coordinate. 
+    # Initializgin the distance from the coordinate to the nodes.
     distances_A = path_length(coordinate_A, closest_nodes_A, map_, vehicle_speed)
     distances_B = path_length(coordinate_B, closest_nodes_B, map_, vehicle_speed)
 
-    # Finding the closest. Maybe not needed?
+    # Finding the closest.
     closest_A = min(distances_A, key = lambda x: x[1])
     closest_B = min(distances_B, key = lambda x: x[1])
 
-    # Making a list of the city and highway graphs.
+    # Initializing the highway graph and a list of the city graphs.
     highway_graph, *city_graphs = create_country_graphs(map_)
-    
+
     # Searching in which city each coordinate is.
     for i, city in enumerate(city_graphs):
         if closest_A[0] in city:
             city_A = i
         if closest_B[0] in city:
             city_B = i
-        
-    # Getting all the city exits. All exits are equally good.
+    
+    # Getting all the city exits.
     exits = map_.get_all_city_exits()
 
     # Finding the closest exits to the starting nodes
-    path_A_exit, cost_A_exit =  BFSSolverFastestPathMD()(city_graphs[city_A], closest_nodes_A[0], exits, vehicle_speed)
+    path_A_exit, cost_A_exit =  BFSSolverFastestPathMD()(city_graphs[city_A], closest_A[0], exits, vehicle_speed)
     exit_A = path_A_exit[-1]
-    path_B_exit, cost_B_exit=  BFSSolverFastestPathMD()(city_graphs[city_B], closest_nodes_B[0], exits, vehicle_speed)
+    path_B_exit, cost_B_exit=  BFSSolverFastestPathMD()(city_graphs[city_B], closest_B[0], exits, vehicle_speed)
     exit_B = path_B_exit[-1]
 
     # Calculating the distance between the exit nodes.
-    exit_path, exit_cost = BFSSolverFastestPath()(highway_graph, exit_A, exit_B, vehicle_speed)
+    exits_path, exits_cost = BFSSolverFastestPath()(highway_graph, exit_A, exit_B, vehicle_speed)
 
     # Now adding the three parts together.
-    total_path = path_A_exit + exit_path + path_B_exit[::-1]
-    # Removing all duplicates
+    total_path = path_A_exit + exits_path + path_B_exit[::-1]
+    # Removing all duplicates.
     total_path = list(dict.fromkeys(total_path))
 
     # Now we need to add the distance between the coordinate to their closest nodes.
-    total_cost = cost_A_exit + exit_cost + cost_B_exit + closest_A[1] + closest_B[1] 
+    total_cost = cost_A_exit + exits_cost + cost_B_exit + closest_A[1] + closest_B[1] 
 
-     # Looking if the coordinates are in the same city.
+    # Looking if the coordinates are in the same city. If they are we calculate the fastest path.
     if city_A == city_B:
         if len(closest_nodes_A) == 1:
-            path_city, cost_city =  BFSSolverFastestPathMD()(city_graphs[city_A], closest_nodes_A[0], closest_nodes_B, vehicle_speed)
+            path_city, cost_city =  BFSSolverFastestPathMD()(city_graphs[city_A], closest_A[0], closest_nodes_B, vehicle_speed)
+
         elif len(closest_nodes_B) == 1:
-            path_city, cost_city =  BFSSolverFastestPathMD()(city_graphs[city_A], closest_nodes_B[0], closest_nodes_A, vehicle_speed)
+            path_city, cost_city =  BFSSolverFastestPathMD()(city_graphs[city_A], closest_B[0], closest_nodes_A, vehicle_speed)
+
         else:
             path1, cost1 =  BFSSolverFastestPathMD()(city_graphs[city_A], closest_nodes_A[0], closest_nodes_B, vehicle_speed)
             path2, cost2 =  BFSSolverFastestPathMD()(city_graphs[city_A], closest_nodes_A[1], closest_nodes_B, vehicle_speed)
+
             if cost1 < cost2:
                 path_city = path1
                 cost_city = cost1
             path_city = path2
             cost_city = cost2
-        print(cost_city, total_cost)
+        
+        # Cheking if going through the city is faster than going through the highway.
         if cost_city < total_cost:
             return path_city, cost_city
 
